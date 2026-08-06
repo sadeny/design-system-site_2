@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 
 type ModuleId = string;
+type Language = "zh" | "en";
 type ContentItem = { title: string; body: string; meta: string };
 type NavNode = { id: ModuleId; label: string; body?: string; accent?: string; children?: NavNode[] };
 type ModulePage = {
@@ -235,24 +236,38 @@ registerNavigationPages(navigation);
 
 function BrandGlyph() { return <span className="brand-glyph" aria-hidden="true"><i /><i /><i /></span>; }
 const displayNodeLabel = (label: string) => label.replace(/^\d+(?:\.\d+)*\.?\s*/, "");
+const englishNames: Record<string, string> = {
+  overview: "Overview", "设计原则": "Design Principles", "协同差异": "Coordinated Differentiation", "HMI 设计": "HMI Design", "APP 设计": "App Design", "Web 设计": "Web Design",
+  "设计语言": "Design Language", "品牌规范": "Brand Guidelines", "字体": "Typography", "色彩": "Color", "图标": "Icons", "通用基础图标": "General Icons", "驾驶图标": "Driving Icons", "车控图标": "Vehicle Control Icons", "拓展图标": "Extended Icons",
+  "通用视觉样式": "Common Visual Styles", "形状": "Shape", "投影": "Shadow", "圆角": "Corner Radius", "间距": "Spacing", "网格": "Grid", "交互方式": "Interaction", "语音": "Voice", "声音": "Sound", "动效": "Motion", "深色主题": "Dark Theme", "国际化 / 本地化": "Internationalization / Localization",
+  "核心视觉元素": "Core Visual Elements", "车模": "Vehicle Model", "导航图标": "Navigation Icons", "导航 / 智驾引导线": "Navigation / Assisted Driving Guidance", "智驾相关元素": "Assisted Driving Elements", "车道引导箭头": "Lane Guidance Arrows", "Home 按键": "Home Button", "启动 P 档?": "Startup / Park",
+  "设计模式": "Design Patterns", "HMI 构成": "HMI Composition", "核心原则": "Core Principles", "人机交互基础": "Human–Machine Interaction", "人机区域": "Interaction Zones", "多用户交互": "Multi-user Interaction", "系统框架": "System Framework", "核心布局定义": "Core Layout", "层级体系": "Hierarchy", "APP 体系": "App System", "策略": "Strategy", "APP 框架": "App Framework", "通知体系": "Notification System", "模态化": "Modality", "告警体系": "Alert System", "功能面板": "Function Panels", "下拉面板": "Quick Panel", "空调面板": "Climate Panel",
+  "3D 体系": "3D System", "感知信息": "Perception Information", "地理信息": "Geographic Information", "功能辅助信息": "Supporting Information", "语音体系": "Voice System", "逻辑状态": "Logic States", "GUI 结果卡片": "GUI Result Cards", "功能模式": "Functional Modes", "展车模式": "Showroom Mode", "激活引导": "Activation Guide", "开机动画": "Startup Animation", "功能引导": "Feature Guide", "账号体系": "Account System", "个性化": "Personalization", "基础驾驶": "Basic Driving", "辅助影像": "Assistance View", "车外 HMI": "Exterior HMI", "灯光": "Lighting", "语音交互": "Voice Interaction",
+  "设计组件": "Components", "卡片": "Card", "进度条": "Progress Bar", "设计资源": "Resources", "组件库": "Component Libraries", "后排": "Rear Seat", "图标库": "Icon Library", "其他": "Other", "专用术语表": "Glossary", "命名规范": "Naming Guidelines", "更新日志": "Changelog",
+  "用途与适用场景": "Purpose and Use Cases", "结构与变体": "Anatomy and Variants", "状态与行为": "States and Behavior", "使用规范": "Usage Guidelines", "内容结构": "Content Structure",
+};
+const localizeName = (value: string, language: Language) => language === "en" ? (englishNames[value] ?? value) : value;
+const localizedNodeLabel = (label: string, language: Language) => localizeName(displayNodeLabel(label), language);
+const cleanKicker = (value: string) => value.replace(/^\d+(?:\.\d+)*\s*·\s*/, "").replace(/^·\s*/, "");
 
-function TreeNavItem({ node, depth, activeModule, expanded, onSelect, onToggle }: { node: NavNode; depth: number; activeModule: ModuleId; expanded: Set<ModuleId>; onSelect: (id: ModuleId) => void; onToggle: (id: ModuleId) => void }) {
+function TreeNavItem({ node, depth, activeModule, expanded, language, onSelect, onToggle }: { node: NavNode; depth: number; activeModule: ModuleId; expanded: Set<ModuleId>; language: Language; onSelect: (id: ModuleId) => void; onToggle: (id: ModuleId) => void }) {
   const hasChildren = Boolean(node.children?.length);
   const isExpanded = hasChildren && expanded.has(node.id);
-  const displayLabel = displayNodeLabel(node.label);
+  const displayLabel = localizedNodeLabel(node.label, language);
   return <div className="tree-node">
     <div className={`tree-row ${activeModule === node.id ? "current" : ""}`} data-nav-id={node.id} style={{ "--tree-depth": depth } as React.CSSProperties}>
       {hasChildren ? <button className="tree-toggle" aria-label={`${isExpanded ? "收起" : "展开"} ${displayLabel}`} aria-expanded={isExpanded} onClick={() => onToggle(node.id)}><span /></button> : <span className="tree-spacer" />}
       <button className="tree-label" aria-current={activeModule === node.id ? "page" : undefined} onClick={() => onSelect(node.id)}>{displayLabel}</button>
     </div>
-    {isExpanded && <div className="tree-children">{node.children?.map((child) => <TreeNavItem key={child.id} node={child} depth={depth + 1} activeModule={activeModule} expanded={expanded} onSelect={onSelect} onToggle={onToggle} />)}</div>}
+    {isExpanded && <div className="tree-children">{node.children?.map((child) => <TreeNavItem key={child.id} node={child} depth={depth + 1} activeModule={activeModule} expanded={expanded} language={language} onSelect={onSelect} onToggle={onToggle} />)}</div>}
   </div>;
 }
 
-function DetailModule({ page }: { page: ModulePage }) {
+function DetailModule({ page, language }: { page: ModulePage; language: Language }) {
+  const title = localizeName(page.title, language);
   return <div className="module-page" style={{ "--module-accent": page.accent } as React.CSSProperties}>
-    <section className="module-hero"><div className="module-hero-grid"><div><p className="section-kicker">{page.eyebrow}</p><h1>{page.title}</h1><p>{page.lead}</p>{page.status && <span className="module-status">{page.status}</span>}</div><div className="module-visual" aria-hidden="true"><span /><span /><span /><i /></div></div></section>
-    <section className="module-content-section"><div className="module-section-title"><p className="section-kicker">IN THIS SECTION</p><h2>内容结构</h2></div><div className="module-card-grid">{page.items.map((entry, index) => <article className="module-card" key={`${entry.meta}-${entry.title}`}><div className="module-card-index"><span>{entry.meta}</span><i>{String(index + 1).padStart(2, "0")}</i></div><h3>{entry.title}</h3><p>{entry.body}</p><span className="module-card-arrow" aria-hidden="true">↗</span></article>)}</div></section>
+    <section className="module-hero"><div className="module-hero-grid"><div><p className="section-kicker">{cleanKicker(page.eyebrow)}</p><h1>{title}</h1><p>{language === "en" ? `Defines the scope, principles, and usage guidance for ${title}.` : page.lead}</p>{page.status && <span className="module-status">{language === "en" ? "Website synced" : page.status}</span>}</div><div className="module-visual" aria-hidden="true"><span /><span /><span /><i /></div></div></section>
+    <section className="module-content-section"><div className="module-section-title"><p className="section-kicker">{language === "en" ? "IN THIS SECTION" : "本章节内容"}</p><h2>{language === "en" ? "Content Structure" : "内容结构"}</h2></div><div className="module-card-grid">{page.items.map((entry, index) => { const entryTitle = localizeName(entry.title, language); return <article className="module-card" key={`${entry.meta}-${entry.title}`}><div className="module-card-index"><span>{entry.meta}</span><i>{String(index + 1).padStart(2, "0")}</i></div><h3>{entryTitle}</h3><p>{language === "en" ? `Defines the structure, behavior, and usage guidance for ${entryTitle}.` : entry.body}</p><span className="module-card-arrow" aria-hidden="true">↗</span></article>; })}</div></section>
   </div>;
 }
 
@@ -260,9 +275,11 @@ export function DesignSystemPage() {
   const [activeModule, setActiveModule] = useState<ModuleId>("overview");
   const [menuOpen, setMenuOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [language, setLanguage] = useState<Language>("zh");
+  const [languageOpen, setLanguageOpen] = useState(false);
   const [expanded, setExpanded] = useState<Set<ModuleId>>(() => new Set(expandableIds));
   const contentRef = useRef<HTMLElement>(null);
-  const matches = useMemo(() => { const keyword = query.trim().toLowerCase(); if (!keyword) return []; return allNavItems.filter((entry) => `${entry.label} ${modulePages[entry.id].title} ${modulePages[entry.id].eyebrow}`.toLowerCase().includes(keyword)).slice(0, 9); }, [query, allNavItems]);
+  const matches = useMemo(() => { const keyword = query.trim().toLowerCase(); if (!keyword) return []; return allNavItems.filter((entry) => `${entry.label} ${localizedNodeLabel(entry.label, language)} ${modulePages[entry.id].title} ${modulePages[entry.id].eyebrow}`.toLowerCase().includes(keyword)).slice(0, 9); }, [query, language]);
   const selectModule = (id: ModuleId) => {
     const path = findNodePath(navigation, id);
     setExpanded((current) => new Set([...current, ...path.filter((node) => node.children?.length).map((node) => node.id)]));
@@ -279,11 +296,11 @@ export function DesignSystemPage() {
   const activeRootId = activePath[0]?.id;
 
   return <div className="site-shell">
-    <header className="global-header"><div className="global-header-inner"><button className="menu-toggle" aria-expanded={menuOpen} aria-label="切换目录" onClick={() => setMenuOpen((value) => !value)}><span /><span /></button><button className="brand brand-button" onClick={() => selectModule("overview")} aria-label="Design System 首页"><BrandGlyph /><span>Design System</span></button><nav className="global-nav" aria-label="全局导航"><button className={activeModule === "overview" ? "active" : ""} onClick={() => selectModule("overview")}>主页</button><button className={activeRootId === "section-resources" ? "active" : ""} onClick={() => selectModule("section-resources")}>资源</button><button className={activeModule === "changelog" ? "active" : ""} onClick={() => selectModule("changelog")}>更新</button></nav><div className="header-actions"><button className="header-icon search-shortcut" aria-label="打开搜索" onClick={() => document.getElementById("site-search")?.focus()} /></div></div></header>
-    <div className="doc-header"><div className="doc-header-inner"><nav className="doc-breadcrumb" aria-label="当前章节路径">{activePath.map((node, index) => <span key={node.id}>{index > 0 && <i aria-hidden="true">›</i>}<button className={index === activePath.length - 1 ? "current" : ""} onClick={() => selectModule(node.id)}>{node.label}</button></span>)}</nav></div></div>
-    <div className="workspace"><aside className={`sidebar ${menuOpen ? "open" : ""}`}><div className="sidebar-inner"><div className="search-wrap"><span className="search-icon" aria-hidden="true" /><input id="site-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="筛选全部层级" aria-label="筛选全部框架层级" autoComplete="off" />{query && <div className="search-results" role="listbox">{matches.length ? matches.map((entry) => <button key={entry.id} onClick={() => selectModule(entry.id)}><span>{displayNodeLabel(entry.label)}</span><small>{modulePages[entry.id].eyebrow}</small></button>) : <p>未找到匹配内容</p>}</div>}</div><nav className="sidebar-nav tree-nav" aria-label="完整框架目录">{navigation.map((node) => <TreeNavItem key={node.id} node={node} depth={0} activeModule={activeModule} expanded={expanded} onSelect={selectModule} onToggle={toggleNode} />)}</nav><div className="sidebar-foot"><span>网站同步状态</span><strong className="sync-status">已更新</strong></div></div></aside>
+    <header className="global-header"><div className="global-header-inner"><button className="menu-toggle" aria-expanded={menuOpen} aria-label={language === "en" ? "Toggle navigation" : "切换目录"} onClick={() => setMenuOpen((value) => !value)}><span /><span /></button><button className="brand brand-button" onClick={() => selectModule("overview")} aria-label="Design System"><BrandGlyph /><span>Design System</span></button><nav className="global-nav" aria-label={language === "en" ? "Global navigation" : "全局导航"}><button className={activeModule === "overview" ? "active" : ""} onClick={() => selectModule("overview")}>{language === "en" ? "Home" : "主页"}</button><button className={activeRootId === "section-resources" ? "active" : ""} onClick={() => selectModule("section-resources")}>{language === "en" ? "Resources" : "资源"}</button><button className={activeModule === "changelog" ? "active" : ""} onClick={() => selectModule("changelog")}>{language === "en" ? "Updates" : "更新"}</button></nav><div className="header-actions"><button className="header-icon search-shortcut" aria-label={language === "en" ? "Open search" : "打开搜索"} onClick={() => document.getElementById("site-search")?.focus()} /><div className="language-switcher"><button className="language-trigger" aria-haspopup="menu" aria-expanded={languageOpen} onClick={() => setLanguageOpen((value) => !value)}>{language === "zh" ? "中文" : "English"}<span aria-hidden="true">⌄</span></button>{languageOpen && <div className="language-menu" role="menu"><button className={language === "zh" ? "selected" : ""} role="menuitem" onClick={() => { setLanguage("zh"); setLanguageOpen(false); }}>中文</button><button className={language === "en" ? "selected" : ""} role="menuitem" onClick={() => { setLanguage("en"); setLanguageOpen(false); }}>English</button></div>}</div></div></div></header>
+    <div className="doc-header"><div className="doc-header-inner"><nav className="doc-breadcrumb" aria-label={language === "en" ? "Current section path" : "当前章节路径"}>{activePath.map((node, index) => <span key={node.id}>{index > 0 && <i aria-hidden="true">›</i>}<button className={index === activePath.length - 1 ? "current" : ""} onClick={() => selectModule(node.id)}>{localizedNodeLabel(node.label, language)}</button></span>)}</nav></div></div>
+    <div className="workspace"><aside className={`sidebar ${menuOpen ? "open" : ""}`}><div className="sidebar-inner"><div className="search-wrap"><span className="search-icon" aria-hidden="true" /><input id="site-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={language === "en" ? "Search all levels" : "筛选全部层级"} aria-label={language === "en" ? "Search framework" : "筛选全部框架层级"} autoComplete="off" />{query && <div className="search-results" role="listbox">{matches.length ? matches.map((entry) => <button key={entry.id} onClick={() => selectModule(entry.id)}><span>{localizedNodeLabel(entry.label, language)}</span><small>{cleanKicker(modulePages[entry.id].eyebrow)}</small></button>) : <p>{language === "en" ? "No matching content" : "未找到匹配内容"}</p>}</div>}</div><nav className="sidebar-nav tree-nav" aria-label={language === "en" ? "Framework hierarchy" : "完整框架目录"}>{navigation.map((node) => <TreeNavItem key={node.id} node={node} depth={0} activeModule={activeModule} expanded={expanded} language={language} onSelect={selectModule} onToggle={toggleNode} />)}</nav><div className="sidebar-foot"><span>{language === "en" ? "Website status" : "网站同步状态"}</span><strong className="sync-status">{language === "en" ? "Updated" : "已更新"}</strong></div></div></aside>
       {menuOpen && <button className="sidebar-scrim" aria-label="关闭目录" onClick={() => setMenuOpen(false)} />}
-      <main className="content" ref={contentRef} tabIndex={-1} aria-live="polite"><div key={activeModule} className="module-view"><DetailModule page={modulePages[activeModule]} /></div><footer><div className="footer-brand"><BrandGlyph /><strong>Design System</strong></div><div className="footer-meta"><button onClick={() => contentRef.current?.scrollTo({ top: 0, behavior: "smooth" })}>返回顶部 ↑</button></div><p>网站内容依据《Design System 框架结构》更新；框架修改记录由独立变更日志持续维护。</p></footer></main>
+      <main className="content" ref={contentRef} tabIndex={-1} aria-live="polite"><div key={`${activeModule}-${language}`} className="module-view"><DetailModule page={modulePages[activeModule]} language={language} /></div><footer><div className="footer-brand"><BrandGlyph /><strong>Design System</strong></div><div className="footer-meta"><button onClick={() => contentRef.current?.scrollTo({ top: 0, behavior: "smooth" })}>{language === "en" ? "Back to top ↑" : "返回顶部 ↑"}</button></div><p>{language === "en" ? "Website content follows the Design System framework; framework changes are maintained in a separate changelog." : "网站内容依据《Design System 框架结构》更新；框架修改记录由独立变更日志持续维护。"}</p></footer></main>
     </div>
   </div>;
 }

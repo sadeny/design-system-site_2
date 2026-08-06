@@ -59,6 +59,14 @@ button { font-family: inherit; }
 .search-shortcut { width: 28px; height: 28px; position: relative; border-radius: 50%; }
 .search-shortcut::before { content: ""; position: absolute; width: 10px; height: 10px; border: 1.5px solid var(--ink); border-radius: 50%; left: 7px; top: 6px; }
 .search-shortcut::after { content: ""; position: absolute; width: 6px; height: 1.5px; background: var(--ink); transform: rotate(45deg); left: 16px; top: 17px; border-radius: 2px; }
+.language-switcher { position: relative; }
+.language-trigger { min-width: 78px; height: 30px; padding: 0 10px 0 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--ink); font-size: 11px; font-weight: 600; cursor: pointer; }
+.language-trigger:hover { background: var(--surface); }
+.language-trigger span { color: var(--subtle); font-size: 12px; transform: translateY(-1px); }
+.language-menu { position: absolute; z-index: 90; top: 37px; right: 0; width: 116px; padding: 6px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.97); box-shadow: 0 12px 35px rgba(0,0,0,.14); backdrop-filter: blur(18px); }
+.language-menu button { width: 100%; padding: 8px 10px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); text-align: left; font-size: 12px; cursor: pointer; }
+.language-menu button:hover { background: var(--surface); color: var(--ink); }
+.language-menu button.selected { background: #e8e8ed; color: var(--ink); font-weight: 650; }
 .menu-toggle { width: 32px; height: 32px; display: none; position: relative; }
 .menu-toggle span { width: 16px; height: 1px; position: absolute; left: 8px; background: var(--ink); }
 .menu-toggle span:first-child { top: 12px; }.menu-toggle span:last-child { top: 19px; }
@@ -107,7 +115,6 @@ button { font-family: inherit; }
 .tree-toggle[aria-expanded="true"] span { transform: rotate(45deg) translate(-1px,-1px); }
 .tree-label { min-width: 0; padding: 7px 8px 7px 2px; text-align: left; font-size: 12px; line-height: 1.45; overflow-wrap: anywhere; }
 .tree-spacer { width: 24px; height: 32px; position: relative; }
-.tree-spacer::after { content: ""; position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #b5b7bd; left: 10px; top: 15px; }
 .tree-children { position: relative; }
 .tree-children::before { content: ""; position: absolute; left: 11px; top: 0; bottom: 5px; border-left: 1px solid #e0e1e5; pointer-events: none; }
 .sidebar-foot { flex: none; margin-right: 12px; border-top: 1px solid var(--line); padding: 16px 10px 0; display: flex; justify-content: space-between; font-size: 10px; color: var(--subtle); }
