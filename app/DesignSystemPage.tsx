@@ -206,6 +206,15 @@ const navigation: NavNode[] = [
 const flattenNodes = (nodes: NavNode[]): NavNode[] => nodes.flatMap((node) => [node, ...flattenNodes(node.children ?? [])]);
 const allNavItems = flattenNodes(navigation);
 const expandableIds = allNavItems.filter((node) => node.children?.length).map((node) => node.id);
+const findNodePath = (nodes: NavNode[], id: ModuleId, path: NavNode[] = []): NavNode[] => {
+  for (const node of nodes) {
+    const nextPath = [...path, node];
+    if (node.id === id) return nextPath;
+    const childPath = findNodePath(node.children ?? [], id, nextPath);
+    if (childPath.length) return childPath;
+  }
+  return [];
+};
 
 function registerNavigationPages(nodes: NavNode[], inheritedAccent = "#0878e6") {
   for (const node of nodes) {
@@ -230,7 +239,7 @@ function TreeNavItem({ node, depth, activeModule, expanded, onSelect, onToggle }
   const hasChildren = Boolean(node.children?.length);
   const isExpanded = hasChildren && expanded.has(node.id);
   return <div className="tree-node">
-    <div className={`tree-row ${activeModule === node.id ? "current" : ""}`} style={{ "--tree-depth": depth } as React.CSSProperties}>
+    <div className={`tree-row ${activeModule === node.id ? "current" : ""}`} data-nav-id={node.id} style={{ "--tree-depth": depth } as React.CSSProperties}>
       {hasChildren ? <button className="tree-toggle" aria-label={`${isExpanded ? "收起" : "展开"} ${node.label}`} aria-expanded={isExpanded} onClick={() => onToggle(node.id)}><span /></button> : <span className="tree-spacer" />}
       <button className="tree-label" aria-current={activeModule === node.id ? "page" : undefined} onClick={() => onSelect(node.id)}>{node.label}</button>
     </div>
@@ -253,13 +262,24 @@ export function DesignSystemPage() {
   const [expanded, setExpanded] = useState<Set<ModuleId>>(() => new Set(expandableIds));
   const contentRef = useRef<HTMLElement>(null);
   const matches = useMemo(() => { const keyword = query.trim().toLowerCase(); if (!keyword) return []; return allNavItems.filter((entry) => `${entry.label} ${modulePages[entry.id].title} ${modulePages[entry.id].eyebrow}`.toLowerCase().includes(keyword)).slice(0, 9); }, [query, allNavItems]);
-  const selectModule = (id: ModuleId) => { setActiveModule(id); setMenuOpen(false); setQuery(""); requestAnimationFrame(() => contentRef.current?.scrollTo({ top: 0, behavior: "smooth" })); };
+  const selectModule = (id: ModuleId) => {
+    const path = findNodePath(navigation, id);
+    setExpanded((current) => new Set([...current, ...path.filter((node) => node.children?.length).map((node) => node.id)]));
+    setActiveModule(id);
+    setMenuOpen(false);
+    setQuery("");
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      contentRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+      document.querySelector<HTMLElement>(`[data-nav-id="${id}"]`)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }));
+  };
   const toggleNode = (id: ModuleId) => setExpanded((current) => { const next = new Set(current); if (next.has(id)) next.delete(id); else next.add(id); return next; });
-  const activeLabel = allNavItems.find((entry) => entry.id === activeModule)?.label ?? "1. overview";
+  const activePath = findNodePath(navigation, activeModule);
+  const activeRootId = activePath[0]?.id;
 
   return <div className="site-shell">
-    <header className="global-header"><div className="global-header-inner"><button className="brand brand-button" onClick={() => selectModule("overview")} aria-label="Atlas Design System 首页"><BrandGlyph /><span>Atlas</span></button><nav className="global-nav" aria-label="全局导航"><button className="active" onClick={() => selectModule("principle-general")}>设计</button><button onClick={() => selectModule("component-5-1")}>组件</button><button onClick={() => selectModule("resource-components")}>资源</button><button onClick={() => selectModule("changelog")}>更新</button></nav><div className="header-actions"><button className="header-icon search-shortcut" aria-label="打开搜索" onClick={() => document.getElementById("site-search")?.focus()} /><button className="version-pill" onClick={() => selectModule("changelog")}>已更新 · 2026.08</button><button className="menu-toggle" aria-expanded={menuOpen} aria-label="切换目录" onClick={() => setMenuOpen((value) => !value)}><span /><span /></button></div></div></header>
-    <div className="doc-header"><div className="doc-header-inner"><button className="doc-title" onClick={() => selectModule("overview")}>Design System</button><span className="doc-divider" /><span className="doc-context">{activeLabel}</span></div></div>
+    <header className="global-header"><div className="global-header-inner"><button className="brand brand-button" onClick={() => selectModule("overview")} aria-label="Design System 首页"><BrandGlyph /><span>Design System</span></button><nav className="global-nav" aria-label="全局导航"><button className={activeModule === "overview" ? "active" : ""} onClick={() => selectModule("overview")}>主页</button><button className={activeRootId === "section-resources" ? "active" : ""} onClick={() => selectModule("section-resources")}>资源</button><button className={activeModule === "changelog" ? "active" : ""} onClick={() => selectModule("changelog")}>更新</button></nav><div className="header-actions"><button className="header-icon search-shortcut" aria-label="打开搜索" onClick={() => document.getElementById("site-search")?.focus()} /><button className="version-pill" onClick={() => selectModule("changelog")}>已更新 · 2026.08</button><button className="menu-toggle" aria-expanded={menuOpen} aria-label="切换目录" onClick={() => setMenuOpen((value) => !value)}><span /><span /></button></div></div></header>
+    <div className="doc-header"><div className="doc-header-inner"><nav className="doc-breadcrumb" aria-label="当前章节路径">{activePath.map((node, index) => <span key={node.id}>{index > 0 && <i aria-hidden="true">›</i>}<button className={index === activePath.length - 1 ? "current" : ""} onClick={() => selectModule(node.id)}>{node.label}</button></span>)}</nav></div></div>
     <div className="workspace"><aside className={`sidebar ${menuOpen ? "open" : ""}`}><div className="sidebar-inner"><div className="search-wrap"><span className="search-icon" aria-hidden="true" /><input id="site-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="筛选全部层级" aria-label="筛选全部框架层级" autoComplete="off" />{query && <div className="search-results" role="listbox">{matches.length ? matches.map((entry) => <button key={entry.id} onClick={() => selectModule(entry.id)}><span>{entry.label}</span><small>{modulePages[entry.id].eyebrow}</small></button>) : <p>未找到匹配内容</p>}</div>}</div><nav className="sidebar-nav tree-nav" aria-label="完整框架目录">{navigation.map((node) => <TreeNavItem key={node.id} node={node} depth={0} activeModule={activeModule} expanded={expanded} onSelect={selectModule} onToggle={toggleNode} />)}</nav><div className="sidebar-foot"><span>网站同步状态</span><strong className="sync-status">已更新</strong></div></div></aside>
       {menuOpen && <button className="sidebar-scrim" aria-label="关闭目录" onClick={() => setMenuOpen(false)} />}
       <main className="content" ref={contentRef} tabIndex={-1} aria-live="polite"><div key={activeModule} className="module-view"><DetailModule page={modulePages[activeModule]} /></div><footer><div className="footer-brand"><BrandGlyph /><strong>Atlas Design System</strong></div><div className="footer-meta"><span>Framework 2026.08</span><span>网站已同步</span><button onClick={() => contentRef.current?.scrollTo({ top: 0, behavior: "smooth" })}>返回顶部 ↑</button></div><p>网站内容依据《Design System 框架结构》更新；框架修改记录由独立变更日志持续维护。</p></footer></main>
