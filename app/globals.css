@@ -229,11 +229,12 @@ button { font-family: inherit; }
 .collaboration-note strong { color:#0868c4;font-size:13px; }
 .collaboration-note span { color:#38536d;font-size:13px;line-height:1.6; }
 
-.module-page { width:min(1040px,calc(100% - 96px));margin:0 auto;padding-bottom:100px; }
+.module-page { width:100%;margin:0;padding:0 48px 100px; }
 .module-hero { padding:54px 0 76px;border-bottom:1px solid var(--line); }
-.module-hero-grid { display:grid;grid-template-columns:1.25fr .75fr;align-items:center;gap:70px; }
+.module-hero-grid { width:100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(200px,250px);align-items:center;gap:clamp(36px,6vw,96px); }
 .module-hero h1 { margin:12px 0 22px;font-size:clamp(56px,7.2vw,92px);line-height:.94;letter-spacing:-.065em;font-weight:720; }
-.module-hero-grid > div:first-child > p:not(.section-kicker) { max-width:650px;margin:0;color:var(--muted);font-size:20px;line-height:1.55;letter-spacing:-.018em; }
+.module-hero-grid > div:first-child { min-width:0; }
+.module-hero-grid > div:first-child > p:not(.section-kicker) { width:100%;max-width:none;margin:0;color:var(--muted);font-size:20px;line-height:1.55;letter-spacing:-.018em;overflow-wrap:anywhere; }
 .module-status { display:inline-flex;margin-top:25px;padding:7px 11px;border-radius:999px;background:color-mix(in srgb,var(--module-accent) 12%,white);color:var(--module-accent);font-size:10px;font-weight:700; }
 .module-visual { aspect-ratio:1;max-width:250px;justify-self:end;position:relative;border-radius:35%;background:color-mix(in srgb,var(--module-accent) 10%,white);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--module-accent) 15%,white); }
 .module-visual span,.module-visual i { position:absolute;display:block; }
@@ -259,7 +260,7 @@ footer { padding: 40px 0 48px; border-top:1px solid var(--line); display:grid;gr
   .principle-card { min-height:260px;display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:20px }.principle-art{order:2}.update-card{min-height:270px;display:grid;grid-template-columns:1fr 1fr}.update-copy{align-self:end}.foundation-grid,.topic-grid{grid-template-columns:repeat(2,1fr)}
   .platform-section{grid-template-columns:1fr;padding:48px}.device-stage{margin-top:-10px}
   .collaboration-flow{grid-template-columns:repeat(2,1fr)}.collaboration-step i{display:none}
-  .module-page{width:min(100% - 56px,900px)}.module-hero-grid{grid-template-columns:1fr .5fr;gap:36px}.module-card-grid{grid-template-columns:1fr 1fr}
+  .module-page{width:100%;padding-inline:28px}.module-hero-grid{grid-template-columns:minmax(0,1fr) minmax(180px,220px);gap:36px}.module-card-grid{grid-template-columns:1fr 1fr}
 }
 
 @media (max-width: 760px) {
@@ -271,7 +272,7 @@ footer { padding: 40px 0 48px; border-top:1px solid var(--line); display:grid;gr
   .foundation-grid,.topic-grid{grid-template-columns:1fr}.update-card{display:flex;min-height:410px}.update-art{min-height:240px}.topic-card{min-height:270px}
   .platform-section{margin-top:72px;margin-bottom:72px;padding:36px 24px;border-radius:23px}.device-stage{height:270px;transform:scale(.82);transform-origin:center top;margin-bottom:-40px}.device-hmi{left:0}.device-web{left:80px}.device-phone{right:0}
   .collaboration-flow{grid-template-columns:1fr}.collaboration-card{min-height:0}.collaboration-step{margin-bottom:30px}.collaboration-note{grid-template-columns:1fr;gap:8px}
-  .module-page{width:calc(100% - 36px);padding-bottom:72px}.module-hero{padding:35px 0 56px}.module-hero-grid{grid-template-columns:1fr}.module-visual{display:none}.module-hero h1{font-size:55px}.module-hero-grid>div:first-child>p:not(.section-kicker){font-size:17px}.module-content-section{padding-top:56px}.module-card-grid{grid-template-columns:1fr}.module-card{min-height:210px}
+  .module-page{width:100%;padding:0 18px 72px}.module-hero{padding:35px 0 56px}.module-hero-grid{grid-template-columns:1fr}.module-visual{display:none}.module-hero h1{font-size:55px}.module-hero-grid>div:first-child>p:not(.section-kicker){font-size:17px}.module-content-section{padding-top:56px}.module-card-grid{grid-template-columns:1fr}.module-card{min-height:210px}
   footer{grid-template-columns:1fr;padding-bottom:36px}.footer-meta{flex-wrap:wrap;gap:12px 18px}
 }
 
