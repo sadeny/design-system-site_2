@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 
 type ModuleId = string;
 type ContentItem = { title: string; body: string; meta: string };
+type NavNode = { id: ModuleId; label: string; body?: string; accent?: string; children?: NavNode[] };
 type ModulePage = {
   eyebrow: string;
   title: string;
@@ -164,17 +165,78 @@ for (const [code, title, description] of componentDescriptions) {
   modulePages[`component-${code.replace(".", "-")}`] = componentPage(code, title, description);
 }
 
-const navigation: Array<{ group: string; items: Array<{ id: ModuleId; label: string }> }> = [
-  { group: "1. overview", items: [{ id: "overview", label: "1. overview" }] },
-  { group: "2. 设计原则", items: [{ id: "principle-general", label: "2.1 设计原则" }, { id: "principle-hmi", label: "2.2 HMI 设计" }, { id: "principle-app", label: "2.3 APP 设计" }, { id: "principle-web", label: "2.4 Web 设计" }] },
-  { group: "3. 设计语言", items: [{ id: "language-brand", label: "3.1 品牌规范" }, { id: "language-type", label: "3.2 字体" }, { id: "language-color", label: "3.3 色彩" }, { id: "language-icons", label: "3.4 图标" }, { id: "language-visual", label: "3.5 通用视觉样式" }, { id: "language-interaction", label: "3.6 交互方式" }, { id: "language-sound", label: "3.7 声音" }, { id: "language-motion", label: "3.8 动效" }, { id: "language-dark", label: "3.9 深色主题" }, { id: "language-localization", label: "3.10 国际化 / 本地化" }, { id: "language-core", label: "3.11 核心视觉元素" }] },
-  { group: "4. 设计模式 · HMI", items: [{ id: "pattern-composition", label: "4.1.1 HMI 构成" }, { id: "pattern-human", label: "4.1.2 人机交互基础" }, { id: "pattern-system", label: "4.1.3 系统框架" }, { id: "pattern-3d", label: "4.1.4 3D 体系" }, { id: "pattern-voice", label: "4.1.5 语音体系" }, { id: "pattern-function", label: "4.1.6 功能模式" }, { id: "pattern-exterior", label: "4.1.7 车外 HMI" }] },
-  { group: "5. 设计组件", items: componentDescriptions.map(([code, title]) => ({ id: `component-${code.replace(".", "-")}`, label: `${code} ${title}` })) },
-  { group: "6. 设计资源", items: [{ id: "resource-components", label: "6.1 组件库" }, { id: "resource-icons", label: "6.2 图标库" }] },
-  { group: "7. 其他", items: [{ id: "terminology", label: "7.1 专用术语表" }, { id: "naming", label: "7.2 命名规范" }, { id: "changelog", label: "7.3 更新日志" }] },
+const codeId = (code: string) => code.replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-|-$/g, "");
+const leaf = (parentId: string, code: string, title: string, body: string, children?: NavNode[]): NavNode => ({ id: `${parentId}--${codeId(code)}`, label: `${code} ${title}`, body, children });
+const moduleNode = (id: string, label: string, nested: Record<string, NavNode[]> = {}): NavNode => ({
+  id, label, body: modulePages[id].lead, accent: modulePages[id].accent,
+  children: modulePages[id].items.filter((entry) => /^\d/.test(entry.meta)).map((entry) => leaf(id, entry.meta, entry.title, entry.body, nested[entry.meta])),
+});
+
+const navigation: NavNode[] = [
+  { id: "overview", label: "1. overview", body: modulePages.overview.lead, accent: "#0878e6" },
+  { id: "section-principles", label: "2. 设计原则", body: "用于定义各类产品与平台的设计原则。", accent: "#18a66a", children: [
+    moduleNode("principle-general", "2.1 设计原则"), moduleNode("principle-hmi", "2.2 HMI 设计"), moduleNode("principle-app", "2.3 APP 设计"), moduleNode("principle-web", "2.4 Web 设计"),
+  ] },
+  { id: "section-language", label: "3. 设计语言", body: "用于定义 Design System 的统一感知与交互表达。", accent: "#695cff", children: [
+    moduleNode("language-brand", "3.1 品牌规范"), moduleNode("language-type", "3.2 字体"), moduleNode("language-color", "3.3 色彩"), moduleNode("language-icons", "3.4 图标"), moduleNode("language-visual", "3.5 通用视觉样式"), moduleNode("language-interaction", "3.6 交互方式"), moduleNode("language-sound", "3.7 声音"), moduleNode("language-motion", "3.8 动效"), moduleNode("language-dark", "3.9 深色主题"), moduleNode("language-localization", "3.10 国际化 / 本地化"),
+    moduleNode("language-core", "3.11 核心视觉元素", {
+      "3.11.3": [leaf("language-core--3-11-3", "3.11.3.1", "智驾相关元素", "用于表达智能驾驶相关状态和信息。"), leaf("language-core--3-11-3", "3.11.3.2", "车道引导箭头", "用于表达车辆与目标路径之间的引导方向。")],
+    }),
+  ] },
+  { id: "section-patterns", label: "4. 设计模式", body: "用于沉淀常见场景下可复用的设计解决方案。", accent: "#00a0a8", children: [
+    { id: "patterns-hmi", label: "4.1 HMI", body: "用于组织 HMI 产品中的系统结构、交互和功能模式。", children: [
+      moduleNode("pattern-composition", "4.1.1 HMI 构成"), moduleNode("pattern-human", "4.1.2 人机交互基础"),
+      moduleNode("pattern-system", "4.1.3 系统框架", {
+        "4.1.3.4": [leaf("pattern-system--4-1-3-4", "4.1.3.4.1", "策略", "用于定义 APP 体系的整体设计策略。"), leaf("pattern-system--4-1-3-4", "4.1.3.4.2", "APP 框架", "用于定义 APP 的通用结构框架。")],
+        "4.1.3.9": [leaf("pattern-system--4-1-3-9", "4.1.3.9.1", "下拉面板", "用于定义下拉快捷面板的结构和交互。"), leaf("pattern-system--4-1-3-9", "4.1.3.9.2", "空调面板", "用于定义空调控制面板的结构和交互。")],
+      }),
+      moduleNode("pattern-3d", "4.1.4 3D 体系"), moduleNode("pattern-voice", "4.1.5 语音体系", {
+        "4.1.5.1": [leaf("pattern-voice--4-1-5-1", "4.1.5.1.1", "逻辑状态", "用于定义 Avatar 在不同语音阶段的状态变化。")],
+      }),
+      moduleNode("pattern-function", "4.1.6 功能模式", {
+        "4.1.6.6": [leaf("pattern-function--4-1-6-6", "4.1.6.6.1", "个性化", "用于定义与账号关联的个性化体验。")],
+      }), moduleNode("pattern-exterior", "4.1.7 车外 HMI"),
+    ] },
+  ] },
+  { id: "section-components", label: "5. 设计组件", body: "用于收录可复用的界面组件及其使用规范。", accent: "#ff7849", children: componentDescriptions.map(([code, title]) => ({ id: `component-${code.replace(".", "-")}`, label: `${code} ${title}`, body: modulePages[`component-${code.replace(".", "-")}`].lead })) },
+  { id: "section-resources", label: "6. 设计资源", body: "用于集中管理支持设计和开发工作的资源。", accent: "#e87518", children: [moduleNode("resource-components", "6.1 组件库"), moduleNode("resource-icons", "6.2 图标库")] },
+  { id: "section-other", label: "7. 其他", body: "用于收录术语、命名、更新记录等支持性内容。", accent: "#59616d", children: [{ id: "terminology", label: "7.1 专用术语表", body: modulePages.terminology.lead }, { id: "naming", label: "7.2 命名规范", body: modulePages.naming.lead }, { id: "changelog", label: "7.3 更新日志", body: modulePages.changelog.lead }] },
 ];
 
+const flattenNodes = (nodes: NavNode[]): NavNode[] => nodes.flatMap((node) => [node, ...flattenNodes(node.children ?? [])]);
+const allNavItems = flattenNodes(navigation);
+const expandableIds = allNavItems.filter((node) => node.children?.length).map((node) => node.id);
+
+function registerNavigationPages(nodes: NavNode[], inheritedAccent = "#0878e6") {
+  for (const node of nodes) {
+    const accent = node.accent ?? inheritedAccent;
+    if (!modulePages[node.id]) {
+      const [code, ...titleParts] = node.label.split(" ");
+      const title = titleParts.join(" ") || node.label;
+      modulePages[node.id] = {
+        eyebrow: `${code} · FRAMEWORK`, title, accent, lead: node.body ?? `介绍 ${title} 的定义、范围与使用要求。`,
+        items: (node.children ?? []).map((child) => { const [meta, ...parts] = child.label.split(" "); return item(meta, parts.join(" "), child.body ?? `查看 ${parts.join(" ")} 的具体定义与规范。`); }),
+        noteTitle: node.children?.length ? "框架层级" : "节点说明", note: node.children?.length ? "本页面汇总直属子级；可通过左侧框架树继续进入任意层级。" : "该节点已作为独立框架内容开放，可在此持续补充具体规范。",
+      };
+    }
+    registerNavigationPages(node.children ?? [], accent);
+  }
+}
+registerNavigationPages(navigation);
+
 function BrandGlyph() { return <span className="brand-glyph" aria-hidden="true"><i /><i /><i /></span>; }
+
+function TreeNavItem({ node, depth, activeModule, expanded, onSelect, onToggle }: { node: NavNode; depth: number; activeModule: ModuleId; expanded: Set<ModuleId>; onSelect: (id: ModuleId) => void; onToggle: (id: ModuleId) => void }) {
+  const hasChildren = Boolean(node.children?.length);
+  const isExpanded = hasChildren && expanded.has(node.id);
+  return <div className="tree-node">
+    <div className={`tree-row ${activeModule === node.id ? "current" : ""}`} style={{ "--tree-depth": depth } as React.CSSProperties}>
+      {hasChildren ? <button className="tree-toggle" aria-label={`${isExpanded ? "收起" : "展开"} ${node.label}`} aria-expanded={isExpanded} onClick={() => onToggle(node.id)}><span /></button> : <span className="tree-spacer" />}
+      <button className="tree-label" aria-current={activeModule === node.id ? "page" : undefined} onClick={() => onSelect(node.id)}>{node.label}</button>
+    </div>
+    {isExpanded && <div className="tree-children">{node.children?.map((child) => <TreeNavItem key={child.id} node={child} depth={depth + 1} activeModule={activeModule} expanded={expanded} onSelect={onSelect} onToggle={onToggle} />)}</div>}
+  </div>;
+}
 
 function DetailModule({ page }: { page: ModulePage }) {
   return <div className="module-page" style={{ "--module-accent": page.accent } as React.CSSProperties}>
@@ -188,16 +250,17 @@ export function DesignSystemPage() {
   const [activeModule, setActiveModule] = useState<ModuleId>("overview");
   const [menuOpen, setMenuOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [expanded, setExpanded] = useState<Set<ModuleId>>(() => new Set(expandableIds));
   const contentRef = useRef<HTMLElement>(null);
-  const allNavItems = useMemo(() => navigation.flatMap((section) => section.items), []);
   const matches = useMemo(() => { const keyword = query.trim().toLowerCase(); if (!keyword) return []; return allNavItems.filter((entry) => `${entry.label} ${modulePages[entry.id].title} ${modulePages[entry.id].eyebrow}`.toLowerCase().includes(keyword)).slice(0, 9); }, [query, allNavItems]);
   const selectModule = (id: ModuleId) => { setActiveModule(id); setMenuOpen(false); setQuery(""); requestAnimationFrame(() => contentRef.current?.scrollTo({ top: 0, behavior: "smooth" })); };
+  const toggleNode = (id: ModuleId) => setExpanded((current) => { const next = new Set(current); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   const activeLabel = allNavItems.find((entry) => entry.id === activeModule)?.label ?? "1. overview";
 
   return <div className="site-shell">
     <header className="global-header"><div className="global-header-inner"><button className="brand brand-button" onClick={() => selectModule("overview")} aria-label="Atlas Design System 首页"><BrandGlyph /><span>Atlas</span></button><nav className="global-nav" aria-label="全局导航"><button className="active" onClick={() => selectModule("principle-general")}>设计</button><button onClick={() => selectModule("component-5-1")}>组件</button><button onClick={() => selectModule("resource-components")}>资源</button><button onClick={() => selectModule("changelog")}>更新</button></nav><div className="header-actions"><button className="header-icon search-shortcut" aria-label="打开搜索" onClick={() => document.getElementById("site-search")?.focus()} /><button className="version-pill" onClick={() => selectModule("changelog")}>已更新 · 2026.08</button><button className="menu-toggle" aria-expanded={menuOpen} aria-label="切换目录" onClick={() => setMenuOpen((value) => !value)}><span /><span /></button></div></div></header>
     <div className="doc-header"><div className="doc-header-inner"><button className="doc-title" onClick={() => selectModule("overview")}>Design System</button><span className="doc-divider" /><span className="doc-context">{activeLabel}</span></div></div>
-    <div className="workspace"><aside className={`sidebar ${menuOpen ? "open" : ""}`}><div className="sidebar-inner"><div className="search-wrap"><span className="search-icon" aria-hidden="true" /><input id="site-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="筛选规范" aria-label="筛选规范" autoComplete="off" />{query && <div className="search-results" role="listbox">{matches.length ? matches.map((entry) => <button key={entry.id} onClick={() => selectModule(entry.id)}><span>{entry.label}</span><small>{modulePages[entry.id].eyebrow}</small></button>) : <p>未找到匹配内容</p>}</div>}</div><nav className="sidebar-nav" aria-label="规范目录">{navigation.map((section) => <div className="nav-group" key={section.group}><p>{section.group}</p>{section.items.map((entry) => <button key={entry.id} className={activeModule === entry.id ? "current" : ""} aria-current={activeModule === entry.id ? "page" : undefined} onClick={() => selectModule(entry.id)}>{entry.label}</button>)}</div>)}</nav><div className="sidebar-foot"><span>网站同步状态</span><strong className="sync-status">已更新</strong></div></div></aside>
+    <div className="workspace"><aside className={`sidebar ${menuOpen ? "open" : ""}`}><div className="sidebar-inner"><div className="search-wrap"><span className="search-icon" aria-hidden="true" /><input id="site-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="筛选全部层级" aria-label="筛选全部框架层级" autoComplete="off" />{query && <div className="search-results" role="listbox">{matches.length ? matches.map((entry) => <button key={entry.id} onClick={() => selectModule(entry.id)}><span>{entry.label}</span><small>{modulePages[entry.id].eyebrow}</small></button>) : <p>未找到匹配内容</p>}</div>}</div><nav className="sidebar-nav tree-nav" aria-label="完整框架目录">{navigation.map((node) => <TreeNavItem key={node.id} node={node} depth={0} activeModule={activeModule} expanded={expanded} onSelect={selectModule} onToggle={toggleNode} />)}</nav><div className="sidebar-foot"><span>网站同步状态</span><strong className="sync-status">已更新</strong></div></div></aside>
       {menuOpen && <button className="sidebar-scrim" aria-label="关闭目录" onClick={() => setMenuOpen(false)} />}
       <main className="content" ref={contentRef} tabIndex={-1} aria-live="polite"><div key={activeModule} className="module-view"><DetailModule page={modulePages[activeModule]} /></div><footer><div className="footer-brand"><BrandGlyph /><strong>Atlas Design System</strong></div><div className="footer-meta"><span>Framework 2026.08</span><span>网站已同步</span><button onClick={() => contentRef.current?.scrollTo({ top: 0, behavior: "smooth" })}>返回顶部 ↑</button></div><p>网站内容依据《Design System 框架结构》更新；框架修改记录由独立变更日志持续维护。</p></footer></main>
     </div>

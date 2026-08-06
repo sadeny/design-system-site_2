@@ -8,7 +8,7 @@
   --surface: #f5f5f7;
   --card: #ffffff;
   --blue: #0878e6;
-  --sidebar-width: 280px;
+  --sidebar-width: 320px;
 }
 
 * { box-sizing: border-box; }
@@ -92,12 +92,21 @@ button { font-family: inherit; }
 .search-results button:hover { background: var(--surface); }
 .search-results span { font-size: 12px; font-weight: 600; }.search-results small { font-size: 10px; color: var(--subtle); margin-top: 2px; }
 .search-results p { font-size: 12px; color: var(--muted); padding: 8px 10px; margin: 0; }
-.nav-group { margin-bottom: 24px; }
-.nav-group p { margin: 0 0 8px 12px; font-size: 10px; font-weight: 700; letter-spacing: .08em; color: #858890; text-transform: uppercase; }
-.nav-group > button { position: relative; display: block; width:100%; padding: 7px 12px; border-radius: 8px; font-size: 13px; color: #44464c; line-height: 1.25; margin: 2px 0; border:0;background:transparent;text-align:left;cursor:pointer; }
-.nav-group > button:hover { background: #f0f0f3; color: var(--ink); }
-.nav-group > button.current { background: #e8e8ed; color: var(--ink); font-weight: 650; }
-.nav-group > button.current::before { content: ""; position: absolute; width: 3px; height: 14px; border-radius: 2px; background: var(--ink); left: -9px; top: 8px; }
+.tree-nav { padding-bottom: 18px; }
+.tree-node { min-width: 0; }
+.tree-row { position: relative; min-height: 32px; padding-left: calc(var(--tree-depth) * 15px); display: grid; grid-template-columns: 24px minmax(0,1fr); align-items: start; border-radius: 8px; margin: 1px 0; color: #4b4e55; }
+.tree-row:hover { background: #f0f0f3; color: var(--ink); }
+.tree-row.current { background: #e7e7ec; color: var(--ink); font-weight: 650; }
+.tree-row.current::before { content: ""; position: absolute; width: 3px; height: 16px; border-radius: 2px; background: var(--ink); left: -10px; top: 8px; }
+.tree-toggle,.tree-label { border: 0; background: transparent; color: inherit; cursor: pointer; }
+.tree-toggle { width: 24px; height: 32px; padding: 0; display: grid; place-items: center; }
+.tree-toggle span { width: 6px; height: 6px; border-right: 1.5px solid #777b83; border-bottom: 1.5px solid #777b83; transform: rotate(-45deg); transition: transform .16s ease; }
+.tree-toggle[aria-expanded="true"] span { transform: rotate(45deg) translate(-1px,-1px); }
+.tree-label { min-width: 0; padding: 7px 8px 7px 2px; text-align: left; font-size: 12px; line-height: 1.45; overflow-wrap: anywhere; }
+.tree-spacer { width: 24px; height: 32px; position: relative; }
+.tree-spacer::after { content: ""; position: absolute; width: 3px; height: 3px; border-radius: 50%; background: #b5b7bd; left: 10px; top: 15px; }
+.tree-children { position: relative; }
+.tree-children::before { content: ""; position: absolute; left: 11px; top: 0; bottom: 5px; border-left: 1px solid #e0e1e5; pointer-events: none; }
 .sidebar-foot { margin-top: auto; border-top: 1px solid var(--line); padding: 18px 10px 0; display: flex; justify-content: space-between; font-size: 10px; color: var(--subtle); }
 .sidebar-foot strong { font-weight: 600; color: var(--muted); }
 .sidebar-foot .sync-status { color:#24724d;display:flex;align-items:center;gap:6px; }
@@ -239,7 +248,7 @@ footer { padding: 40px 0 48px; border-top:1px solid var(--line); display:grid;gr
 .footer-brand { display:flex;align-items:center;gap:8px;font-size:14px}.footer-brand .brand-glyph{transform:scale(.8)}.footer-meta{display:flex;gap:20px;align-items:center;color:var(--subtle);font-size:10px}.footer-meta button{color:var(--ink);font-weight:600;border:0;background:transparent;padding:0;cursor:pointer}footer>p{grid-column:1/-1;margin:0;color:var(--subtle);font-size:11px}
 
 @media (max-width: 1050px) {
-  :root { --sidebar-width: 240px; }
+  :root { --sidebar-width: 280px; }
   .hero,.section-block,.platform-section,footer { width:min(100% - 56px, 900px); }
   .principle-grid,.update-grid { grid-template-columns:1fr; }
   .principle-card { min-height:260px;display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:20px }.principle-art{order:2}.update-card{min-height:270px;display:grid;grid-template-columns:1fr 1fr}.update-copy{align-self:end}.foundation-grid,.topic-grid{grid-template-columns:repeat(2,1fr)}
