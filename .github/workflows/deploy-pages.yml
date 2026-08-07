@@ -38,6 +38,13 @@ jobs:
       - name: Build static site
         run: pnpm build
 
+      - name: Prepare Pages asset paths
+        env:
+          REPOSITORY_NAME: ${{ github.event.repository.name }}
+        run: |
+          mv "dist/client/${REPOSITORY_NAME}/_next" "dist/client/_next"
+          rmdir "dist/client/${REPOSITORY_NAME}"
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
