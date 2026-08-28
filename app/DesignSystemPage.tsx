@@ -503,7 +503,7 @@ export function DesignSystemPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [language, setLanguage] = useState<Language>("zh");
+  const [language, setLanguage] = useState<Language>("en");
   const [languageOpen, setLanguageOpen] = useState(false);
   const [expanded, setExpanded] = useState<Set<ModuleId>>(() => new Set(expandableIds));
   const contentRef = useRef<HTMLElement>(null);
