@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type ModuleId = string;
 type Language = "zh" | "en";
@@ -293,8 +293,7 @@ const navigation: NavNode[] = [
     }),
   ] },
   { id: "section-components", label: "5. 设计组件", body: "用于收录可复用的界面组件及其使用规范。", accent: "#ff7849", children: componentDescriptions.map(([code, title]) => ({ id: `component-${code.replace(".", "-")}`, label: `${code} ${title}`, body: modulePages[`component-${code.replace(".", "-")}`].lead })) },
-  { id: "section-resources", label: "6. 设计资源", body: "用于集中管理支持设计和开发工作的资源。", accent: "#e87518", children: [moduleNode("resource-components", "6.1 组件库"), moduleNode("resource-icons", "6.2 图标库")] },
-  { id: "section-other", label: "7. 其他", body: "用于收录术语、命名、更新记录等支持性内容。", accent: "#59616d", children: [{ id: "terminology", label: "7.1 专用术语表", body: modulePages.terminology.lead }, { id: "naming", label: "7.2 命名规范", body: modulePages.naming.lead }, { id: "changelog", label: "7.3 更新日志", body: modulePages.changelog.lead }] },
+  { id: "section-other", label: "7. 其他", body: "用于收录术语、命名等支持性内容。", accent: "#59616d", children: [{ id: "terminology", label: "7.1 专用术语表", body: modulePages.terminology.lead }, { id: "naming", label: "7.2 命名规范", body: modulePages.naming.lead }] },
 ];
 
 const flattenNodes = (nodes: NavNode[]): NavNode[] => nodes.flatMap((node) => [node, ...flattenNodes(node.children ?? [])]);
@@ -376,19 +375,34 @@ function DetailModule({ page, language, isTopLevel, onSelect }: { page: ModulePa
   </div>;
 }
 
-function HomePage({ language, onOpenGuidelines, onOpenFeature }: { language: Language; onOpenGuidelines: () => void; onOpenFeature: (page: FeaturePageId, module: string) => void }) {
+function HomePage({ language, onOpenPlatform, onOpenFeature }: { language: Language; onOpenPlatform: (platform: "hmi" | "web" | "app") => void; onOpenFeature: (page: FeaturePageId, module: string) => void }) {
+  const pageRef = useRef<HTMLElement>(null);
+  const heroRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const page = pageRef.current;
+    const hero = heroRef.current;
+    if (!page || !hero) return;
+    const header = document.querySelector<HTMLElement>(".global-header");
+    const updateHeader = () => header?.classList.toggle("hero-context", page.scrollTop < hero.offsetHeight);
+    updateHeader();
+    page.addEventListener("scroll", updateHeader, { passive: true });
+    return () => {
+      page.removeEventListener("scroll", updateHeader);
+      header?.classList.remove("hero-context");
+    };
+  }, []);
   const cards = [
     { key: "hmi", kicker: "IN-VEHICLE EXPERIENCE", title: "Design Guidelines for HMI", shortTitle: "HMI", zh: "围绕驾驶安全、多屏协同与多模态交互，构建清晰、自然且具有品牌识别度的座舱体验。", en: "Create clear, natural, and distinctive in-vehicle experiences across screens and interaction modes." },
     { key: "app", kicker: "MOBILE EXPERIENCE", title: "Design Guidelines for APP", shortTitle: "APP", zh: "连接用户、车辆与服务，让移动场景中的任务简洁、连续，并尊重平台原生使用习惯。", en: "Connect people, vehicles, and services through simple, continuous, platform-native mobile experiences." },
     { key: "web", kicker: "WEB EXPERIENCE", title: "Design Guidelines for Web", shortTitle: "Web", zh: "通过响应式布局、高效操作和清晰的信息层级，支持从浏览到专业任务的多样化体验。", en: "Support browsing and professional tasks with responsive layouts, efficient actions, and clear hierarchy." },
   ];
-  return <main className="home-page">
-    <section className="home-hero-card">
-      <div className="home-hero-copy"><p>DESIGN SYSTEM</p><h1>Design System</h1><span>{language === "en" ? "Pursue the best design experience through clear, shared, and actionable guidance." : "以清晰、统一且可执行的设计指导，持续追求最佳的设计体验。"}</span><button onClick={onOpenGuidelines}>{language === "en" ? "Explore Guidelines" : "查看 Guidelines"}<i aria-hidden="true">→</i></button></div>
-      <div className="home-hero-visual"><img src="design-system-hero-ai.png" alt={language === "en" ? "AI-connected automotive design system across vehicle, HMI, mobile, and design components" : "由 AI 连接汽车、车机、手机与设计组件的设计规范体系"} /></div>
+  return <main className="home-page" ref={pageRef}>
+    <section className="home-hero-card" ref={heroRef}>
+      <div className="home-hero-copy"><h1>Design System</h1><span>{language === "en" ? "Pursue the best design experience through clear, shared, and actionable guidance." : "以清晰、统一且可执行的设计指导，持续追求最佳的设计体验。"}</span><div className="home-hero-actions"><button onClick={() => onOpenPlatform("hmi")}>HMI Guidelines <i aria-hidden="true">→</i></button><button onClick={() => onOpenPlatform("web")}>Web Guidelines <i aria-hidden="true">→</i></button><button onClick={() => onOpenPlatform("app")}>App Guidelines <i aria-hidden="true">→</i></button></div></div>
+      <div className="home-hero-visual"><img src="design-system-ai-hero.png" alt={language === "en" ? "AI-connected automotive design system across vehicle, HMI, mobile, and design components" : "由 AI 连接汽车、车机、手机与设计组件的设计规范体系"} /></div>
     </section>
     <section className="home-platform-section" aria-labelledby="home-platform-title"><div className="home-section-heading"><div><p>DESIGN FOR EVERY SURFACE</p><h2 id="home-platform-title">Design Guidelines</h2></div><span>{language === "en" ? "Shared principles and brand foundations, with the right expression for every context." : "共享原则与品牌基础，并为不同场景保留恰当的表达方式。"}</span></div>
-      <div className="home-card-grid">{cards.map((card) => <article className="home-platform-card" key={card.key}><div className={`home-card-art ${card.key}-art`}>{card.key === "hmi" ? <><div className="home-hmi-screen"><span /><span /><i /><b /></div><div className="home-hmi-line" /></> : card.key === "app" ? <><div className="home-app-phone"><span /><i /><b /><em /></div><div className="home-app-ring" /></> : <div className="home-web-window"><div /><span /><span /><i /><b /></div>}</div><div className="home-card-copy"><p>{card.kicker}</p><h3>{card.title}</h3><span>{card[language]}</span><button>{language === "en" ? `Explore ${card.shortTitle}` : `探索 ${card.shortTitle}`}<i aria-hidden="true">→</i></button></div></article>)}</div>
+      <div className="home-card-grid">{cards.map((card) => <button className="home-platform-card home-guideline-card" key={card.key} onClick={() => onOpenPlatform(card.key as "hmi" | "web" | "app")}><div className={`home-card-art ${card.key}-art`}>{card.key === "hmi" ? <><div className="home-hmi-screen"><span /><span /><i /><b /></div><div className="home-hmi-line" /></> : card.key === "app" ? <><div className="home-app-phone"><span /><i /><b /><em /></div><div className="home-app-ring" /></> : <div className="home-web-window"><div /><span /><span /><i /><b /></div>}</div><div className="home-card-copy"><p>{card.kicker}</p><h3>{card.title}</h3><span>{card[language]}</span><span className="home-card-link">{language === "en" ? `Explore ${card.shortTitle}` : `探索 ${card.shortTitle}`} <i aria-hidden="true">→</i></span></div></button>)}</div>
     </section>
     {(["explore", "ai"] as FeaturePageId[]).map((pageId) => { const page = featurePages[pageId]; return <section className="home-platform-section home-feature-section" key={pageId}><div className="home-section-heading"><div><p>{page.eyebrow}</p><h2>{page.title[language]}</h2></div><span>{page.description[language]}</span></div><div className="home-card-grid">{page.modules.map((module) => <button className="home-platform-card home-linked-card" key={module.id} onClick={() => onOpenFeature(pageId, module.id)}><div className={`home-card-art feature-art-${module.art}`}><i /><i /><i /><b /></div><div className="home-card-copy"><h3>{module.title[language]}</h3><span>{module.description[language]}</span><span className="home-card-link">{language === "en" ? "Open module" : "查看模块"} →</span></div></button>)}</div></section>; })}
     <SiteFooter language={language} onBackToTop={() => document.querySelector<HTMLElement>(".home-page")?.scrollTo({ top: 0, behavior: "smooth" })} />
@@ -410,11 +424,48 @@ const featurePages: Record<FeaturePageId, { eyebrow: string; title: LocalizedTex
   ] },
 };
 
-function FeaturePage({ pageId, moduleId, language, onOpenModule, onBack }: { pageId: FeaturePageId; moduleId: string | null; language: Language; onOpenModule: (id: string) => void; onBack: () => void }) {
+function FeaturePage({ pageId, moduleId, language, onOpenModule }: { pageId: FeaturePageId; moduleId: string | null; language: Language; onOpenModule: (id: string) => void }) {
   const page = featurePages[pageId];
   const active = page.modules.find((module) => module.id === moduleId);
-  if (active) return <main className="feature-page"><section className="feature-detail"><button className="feature-back" onClick={onBack}>← {page.title[language]}</button><p>{page.eyebrow}</p><h1>{active.title[language]}</h1><span>{active.description[language]}</span><div className={`feature-detail-art feature-art-${active.art}`}><i /><i /><i /><b /></div><section><h2>{language === "en" ? "About this module" : "模块说明"}</h2><p>{language === "en" ? "This module is ready for detailed methods, examples, tools, and related resources to be added as the topic develops." : "该模块用于持续补充详细方法、案例、工具与相关资源，并可随专题内容逐步扩展。"}</p></section></section><SiteFooter language={language} onBackToTop={() => document.querySelector<HTMLElement>(".feature-page")?.scrollTo({ top: 0, behavior: "smooth" })} /></main>;
+  if (active) return <main className="feature-page"><section className="feature-detail"><p>{page.eyebrow}</p><h1>{active.title[language]}</h1><span>{active.description[language]}</span><div className={`feature-detail-art feature-art-${active.art}`}><i /><i /><i /><b /></div><section><h2>{language === "en" ? "About this module" : "模块说明"}</h2><p>{language === "en" ? "This module is ready for detailed methods, examples, tools, and related resources to be added as the topic develops." : "该模块用于持续补充详细方法、案例、工具与相关资源，并可随专题内容逐步扩展。"}</p></section></section><SiteFooter language={language} onBackToTop={() => document.querySelector<HTMLElement>(".feature-page")?.scrollTo({ top: 0, behavior: "smooth" })} /></main>;
   return <main className="feature-page"><section className="feature-hero"><p>{page.eyebrow}</p><h1>{page.title[language]}</h1><span>{page.description[language]}</span></section><section className="feature-grid">{page.modules.map((module) => <button className="feature-card" key={module.id} onClick={() => onOpenModule(module.id)}><div className={`feature-card-art feature-art-${module.art}`}><i /><i /><i /><b /></div><div className="feature-card-copy"><h2>{module.title[language]}</h2><p>{module.description[language]}</p><span>{language === "en" ? "Open module" : "查看模块"} →</span></div></button>)}</section><SiteFooter language={language} onBackToTop={() => document.querySelector<HTMLElement>(".feature-page")?.scrollTo({ top: 0, behavior: "smooth" })} /></main>;
+}
+
+const resourceGroups = [
+  { platform: "HMI", description: t("面向座舱多屏与多模态体验的设计和制作资源。", "Assets for multiscreen and multimodal in-vehicle experiences."), libraries: [
+    ["components", t("通用组件库", "General Component Library"), t("适用于 HMI 基础界面与常用交互场景的通用组件资源。", "Reusable components for foundational HMI interfaces and common interactions.")],
+    ["hud", t("HUD", "HUD Library"), t("适用于抬头显示界面的组件、模板和视觉资源。", "Components, templates, and visual assets for head-up displays.")],
+    ["3d", t("3D 资源库", "3D Asset Library"), t("车辆、场景、材质和功能表现所需的三维设计资源。", "3D vehicles, scenes, materials, and functional visualization assets.")],
+    ["icons", t("Icon 图标库", "Icon Library"), t("覆盖通用、驾驶、车控与扩展场景的统一图标资源。", "Unified icons for general, driving, vehicle control, and extended scenarios.")],
+    ["motion", t("动画库", "Motion Library"), t("系统转场、状态反馈与品牌体验所需的动画资源。", "Motion assets for transitions, state feedback, and signature experiences.")],
+    ["sound", t("声音库", "Sound Library"), t("操作反馈、系统提示、告警和品牌声音资源。", "Audio assets for feedback, system cues, alerts, and brand expression.")],
+  ] },
+  { platform: "App", description: t("面向移动产品设计、原型和交付的共享资源。", "Shared resources for mobile product design, prototyping, and delivery."), libraries: [
+    ["app-components", t("App 组件库", "App Component Library"), t("遵循移动平台习惯的基础组件、状态和交互资源。", "Mobile-native components, states, and interaction assets.")],
+    ["app-icons", t("App 图标库", "App Icon Library"), t("适用于移动服务与车联功能的图标资源。", "Icons for mobile services and connected vehicle features.")],
+    ["app-templates", t("页面模板库", "Screen Templates"), t("常用移动任务流程和页面布局模板。", "Templates for common mobile flows and screen layouts.")],
+  ] },
+  { platform: "Web", description: t("面向响应式网站和专业 Web 工具的设计资源。", "Design resources for responsive websites and professional web tools."), libraries: [
+    ["web-components", t("Web 组件库", "Web Component Library"), t("支持响应式布局、键鼠操作和无障碍的组件资源。", "Accessible components for responsive layouts and keyboard or pointer input.")],
+    ["web-icons", t("Web 图标库", "Web Icon Library"), t("适用于网站导航、操作和状态表达的图标资源。", "Icons for web navigation, actions, and status communication.")],
+    ["web-templates", t("布局模板库", "Layout Templates"), t("网站首页、内容页和专业任务页面的响应式模板。", "Responsive templates for landing, content, and professional task pages.")],
+  ] },
+] as const;
+
+function ResourcesPage({ language }: { language: Language }) {
+  const download = (name: string) => window.alert(language === "en" ? `${name} is being prepared for download.` : `${name}资源正在准备中。`);
+  return <main className="resources-page"><section className="resources-hero"><p>DESIGN RESOURCES</p><h1>{language === "en" ? "Design Resources" : "设计资源"}</h1><span>{language === "en" ? "A unified destination for reusable HMI, App, and Web design assets." : "集中提供 HMI、App 和 Web 的可复用设计资产，为设计与交付建立统一资源入口。"}</span></section>{resourceGroups.map((group) => <section className="resource-group" key={group.platform}><div className="resource-group-heading"><h2>{group.platform}</h2><p>{group.description[language]}</p></div><div className="resource-library-grid">{group.libraries.map(([id, title, description], index) => <article className="resource-library-card" key={id}><div className={`resource-cover resource-cover-${index % 6}`}><i /><i /><b /></div><div className="resource-library-copy"><p>{group.platform} RESOURCE</p><h3>{title[language]}</h3><span>{description[language]}</span><button type="button" onClick={() => download(title[language])}>{language === "en" ? "Download" : "下载"}<i aria-hidden="true">↓</i></button></div></article>)}</div></section>)}<SiteFooter language={language} onBackToTop={() => document.querySelector<HTMLElement>(".resources-page")?.scrollTo({ top: 0, behavior: "smooth" })} /></main>;
+}
+
+const websiteUpdates = [
+  { date: "2026.08.26", title: t("产品规范与资源架构更新", "Product Guidelines and Resources"), description: t("新增 HMI、Web、App 独立规范入口，重构 HMI 章节层级，并将设计资源独立为网站一级模块。", "Added separate HMI, Web, and App guidelines, refined the HMI hierarchy, and promoted resources to a top-level module.") },
+  { date: "2026.08.08", title: t("主页与专题模块", "Homepage and Topic Modules"), description: t("新增独立主页、探索、AI 专题及统一卡片式内容入口。", "Added the standalone homepage, Explore, AI Topics, and unified card-based entry points.") },
+  { date: "2026.08.07", title: t("章节内容同步", "Content Synchronization"), description: t("同步 overview、设计原则和 HMI 设计原则等章节细节内容。", "Synchronized detailed content for overview and HMI design principles.") },
+  { date: "2026.08.06", title: t("框架结构重构", "Framework Restructure"), description: t("建立设计原则、设计语言、设计模式、设计组件、设计资源和其他内容的基础框架。", "Established the foundational structure for principles, language, patterns, components, resources, and supporting content.") },
+];
+
+function UpdatesPage({ language }: { language: Language }) {
+  return <main className="updates-page"><section className="updates-hero"><p>CHANGELOG</p><h1>{language === "en" ? "Updates" : "更新"}</h1><span>{language === "en" ? "Follow changes to the Design System framework, website experience, and published guidance." : "持续记录 Design System 框架、网站体验和规范内容的重要变化。"}</span></section><section className="updates-list">{websiteUpdates.map((update) => <article key={`${update.date}-${update.title.zh}`}><time>{update.date}</time><div><h2>{update.title[language]}</h2><p>{update.description[language]}</p></div></article>)}</section><SiteFooter language={language} onBackToTop={() => document.querySelector<HTMLElement>(".updates-page")?.scrollTo({ top: 0, behavior: "smooth" })} /></main>;
 }
 
 function SiteFooter({ language, onBackToTop }: { language: Language; onBackToTop: () => void }) {
@@ -446,10 +497,11 @@ function PlatformGuidelinesPage({ platform, language }: { platform: "Web" | "App
 }
 
 export function DesignSystemPage() {
-  const [sitePage, setSitePage] = useState<"home" | "hmi" | "web" | "app" | FeaturePageId>("home");
+  const [sitePage, setSitePage] = useState<"home" | "hmi" | "web" | "app" | "resources" | "updates" | FeaturePageId>("home");
   const [featureModule, setFeatureModule] = useState<string | null>(null);
   const [activeModule, setActiveModule] = useState<ModuleId>("overview");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [language, setLanguage] = useState<Language>("zh");
   const [languageOpen, setLanguageOpen] = useState(false);
@@ -477,8 +529,9 @@ export function DesignSystemPage() {
   const activeRootId = activePath[0]?.id;
 
   return <div className="site-shell">
-    <header className="global-header"><div className="global-header-inner"><button className="menu-toggle" aria-expanded={menuOpen} aria-label={language === "en" ? "Toggle navigation" : "切换目录"} onClick={() => sitePage === "hmi" && setMenuOpen((value) => !value)}><span /><span /></button><button className="brand brand-button" onClick={() => setSitePage("home")} aria-label="Design System"><BrandGlyph /><span>Design System</span></button><nav className="global-nav" aria-label={language === "en" ? "Global navigation" : "全局导航"}><button className={sitePage === "home" ? "active" : ""} onClick={() => setSitePage("home")}>{language === "en" ? "Home" : "主页"}</button><button className={sitePage === "hmi" ? "active" : ""} onClick={() => openGuidelines("overview")}>HMI</button><button className={sitePage === "web" ? "active" : ""} onClick={() => setSitePage("web")}>Web</button><button className={sitePage === "app" ? "active" : ""} onClick={() => setSitePage("app")}>App</button><button className={sitePage === "explore" ? "active" : ""} onClick={() => openFeaturePage("explore")}>{language === "en" ? "Explore" : "探索"}</button><button className={sitePage === "ai" ? "active" : ""} onClick={() => openFeaturePage("ai")}>{language === "en" ? "AI Topics" : "AI 专题"}</button><button className={sitePage === "hmi" && activeRootId === "section-resources" ? "active" : ""} onClick={() => openGuidelines("section-resources")}>{language === "en" ? "Resources" : "资源"}</button><button className={sitePage === "hmi" && activeModule === "changelog" ? "active" : ""} onClick={() => openGuidelines("changelog")}>{language === "en" ? "Updates" : "更新"}</button></nav><div className="header-actions"><button className="header-icon search-shortcut" aria-label={language === "en" ? "Open search" : "打开搜索"} onClick={() => { setSitePage("hmi"); requestAnimationFrame(() => document.getElementById("site-search")?.focus()); }} /><div className="language-switcher"><button className="language-trigger" aria-haspopup="menu" aria-expanded={languageOpen} onClick={() => setLanguageOpen((value) => !value)}>{language === "zh" ? "中文" : "English"}<span aria-hidden="true">⌄</span></button>{languageOpen && <div className="language-menu" role="menu"><button className={language === "zh" ? "selected" : ""} role="menuitem" onClick={() => { setLanguage("zh"); setLanguageOpen(false); }}>中文</button><button className={language === "en" ? "selected" : ""} role="menuitem" onClick={() => { setLanguage("en"); setLanguageOpen(false); }}>English</button></div>}</div></div></div></header>
-    {sitePage === "home" ? <HomePage language={language} onOpenGuidelines={() => openGuidelines("overview")} onOpenFeature={(page, module) => { setFeatureModule(module); setSitePage(page); }} /> : sitePage === "explore" || sitePage === "ai" ? <FeaturePage pageId={sitePage} moduleId={featureModule} language={language} onOpenModule={setFeatureModule} onBack={() => setFeatureModule(null)} /> : sitePage === "web" || sitePage === "app" ? <PlatformGuidelinesPage key={sitePage} platform={sitePage === "web" ? "Web" : "App"} language={language} /> : <>
+    <header className="global-header"><div className="global-header-inner"><button className="menu-toggle" aria-expanded={mobileNavOpen} aria-label={language === "en" ? "Toggle navigation" : "切换导航"} onClick={() => setMobileNavOpen((value) => !value)}><span /><span /><span /></button><button className="brand brand-button" onClick={() => setSitePage("home")} aria-label="Design System"><BrandGlyph /><span>Design System</span></button><nav className="global-nav" aria-label={language === "en" ? "Global navigation" : "全局导航"}><button className={sitePage === "home" ? "active" : ""} onClick={() => setSitePage("home")}>{language === "en" ? "Home" : "主页"}</button><button className={sitePage === "hmi" ? "active" : ""} onClick={() => openGuidelines("overview")}>HMI</button><button className={sitePage === "web" ? "active" : ""} onClick={() => setSitePage("web")}>Web</button><button className={sitePage === "app" ? "active" : ""} onClick={() => setSitePage("app")}>App</button><button className={sitePage === "explore" ? "active" : ""} onClick={() => openFeaturePage("explore")}>{language === "en" ? "Explore" : "探索"}</button><button className={sitePage === "ai" ? "active" : ""} onClick={() => openFeaturePage("ai")}>{language === "en" ? "AI Topics" : "AI 专题"}</button><button className={sitePage === "resources" ? "active" : ""} onClick={() => setSitePage("resources")}>{language === "en" ? "Resources" : "设计资源"}</button><button className={sitePage === "updates" ? "active" : ""} onClick={() => setSitePage("updates")}>{language === "en" ? "Updates" : "更新"}</button></nav><div className="header-actions"><button className="header-icon search-shortcut" aria-label={language === "en" ? "Open search" : "打开搜索"} onClick={() => { setSitePage("hmi"); requestAnimationFrame(() => document.getElementById("site-search")?.focus()); }} /><div className="language-switcher"><button className="language-trigger" aria-haspopup="menu" aria-expanded={languageOpen} onClick={() => setLanguageOpen((value) => !value)}>{language === "zh" ? "中文" : "English"}<span aria-hidden="true">⌄</span></button>{languageOpen && <div className="language-menu" role="menu"><button className={language === "zh" ? "selected" : ""} role="menuitem" onClick={() => { setLanguage("zh"); setLanguageOpen(false); }}>中文</button><button className={language === "en" ? "selected" : ""} role="menuitem" onClick={() => { setLanguage("en"); setLanguageOpen(false); }}>English</button></div>}</div></div></div></header>
+    {mobileNavOpen && <nav className="mobile-global-nav" aria-label={language === "en" ? "Mobile navigation" : "移动端导航"}><button onClick={() => { setSitePage("home"); setMobileNavOpen(false); }}>{language === "en" ? "Home" : "主页"}</button><button onClick={() => { openGuidelines("overview"); setMobileNavOpen(false); }}>HMI</button><button onClick={() => { setSitePage("web"); setMobileNavOpen(false); }}>Web</button><button onClick={() => { setSitePage("app"); setMobileNavOpen(false); }}>App</button><button onClick={() => { openFeaturePage("explore"); setMobileNavOpen(false); }}>{language === "en" ? "Explore" : "探索"}</button><button onClick={() => { openFeaturePage("ai"); setMobileNavOpen(false); }}>{language === "en" ? "AI Topics" : "AI 专题"}</button><button onClick={() => { setSitePage("resources"); setMobileNavOpen(false); }}>{language === "en" ? "Resources" : "设计资源"}</button><button onClick={() => { setSitePage("updates"); setMobileNavOpen(false); }}>{language === "en" ? "Updates" : "更新"}</button>{sitePage === "hmi" && <button className="mobile-directory-link" onClick={() => { setMenuOpen(true); setMobileNavOpen(false); }}>{language === "en" ? "Open HMI directory" : "打开 HMI 章节目录"}</button>}</nav>}
+    {sitePage === "home" ? <HomePage language={language} onOpenPlatform={(platform) => platform === "hmi" ? openGuidelines("overview") : setSitePage(platform)} onOpenFeature={(page, module) => { setFeatureModule(module); setSitePage(page); }} /> : sitePage === "explore" || sitePage === "ai" ? <FeaturePage pageId={sitePage} moduleId={featureModule} language={language} onOpenModule={setFeatureModule} /> : sitePage === "resources" ? <ResourcesPage language={language} /> : sitePage === "updates" ? <UpdatesPage language={language} /> : sitePage === "web" || sitePage === "app" ? <PlatformGuidelinesPage key={sitePage} platform={sitePage === "web" ? "Web" : "App"} language={language} /> : <>
     <div className="doc-header"><div className="doc-header-inner"><nav className="doc-breadcrumb" aria-label={language === "en" ? "Current section path" : "当前章节路径"}><span><button onClick={() => openGuidelines("overview")}>HMI</button></span>{activePath.map((node) => <span key={node.id}><i aria-hidden="true">›</i><button className={node.id === activeModule ? "current" : ""} onClick={() => selectModule(node.id)}>{localizedNodeLabel(node.label, language)}</button></span>)}</nav></div></div>
     <div className="workspace"><aside className={`sidebar ${menuOpen ? "open" : ""}`}><div className="sidebar-inner"><div className="search-wrap"><span className="search-icon" aria-hidden="true" /><input id="site-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={language === "en" ? "Search all levels" : "筛选全部层级"} aria-label={language === "en" ? "Search framework" : "筛选全部框架层级"} autoComplete="off" />{query && <div className="search-results" role="listbox">{matches.length ? matches.map((entry) => <button key={entry.id} onClick={() => selectModule(entry.id)}><span>{localizedNodeLabel(entry.label, language)}</span><small>{cleanKicker(modulePages[entry.id].eyebrow)}</small></button>) : <p>{language === "en" ? "No matching content" : "未找到匹配内容"}</p>}</div>}</div><nav className="sidebar-nav tree-nav" aria-label={language === "en" ? "Framework hierarchy" : "完整框架目录"}>{navigation.map((node) => <TreeNavItem key={node.id} node={node} depth={0} activeModule={activeModule} expanded={expanded} language={language} onSelect={selectModule} onToggle={toggleNode} />)}</nav><div className="sidebar-foot"><span>{language === "en" ? "Website status" : "网站同步状态"}</span><strong className="sync-status">{language === "en" ? "Updated" : "已更新"}</strong></div></div></aside>
       {menuOpen && <button className="sidebar-scrim" aria-label="关闭目录" onClick={() => setMenuOpen(false)} />}
