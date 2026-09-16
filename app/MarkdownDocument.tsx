@@ -27,7 +27,8 @@ function blocks(lines: string[]): ReactNode[] {
     }
     const image = line.match(/^!\[([^\]]*)\]\((?:<)?([^)>]+)(?:>)?\)$/);
     if (image) {
-      result.push(<figure className="markdown-figure" key={key}><img src={image[2]} alt={image[1]} />{lines[i + 1]?.trim().startsWith("*图") && <figcaption>{lines[++i].trim().replace(/^\*|\*$/g, "")}</figcaption>}</figure>);
+      const imageSource = image[2].startsWith("/") ? `.${image[2]}` : image[2];
+      result.push(<figure className="markdown-figure" key={key}><img src={imageSource} alt={image[1]} />{lines[i + 1]?.trim().startsWith("*图") && <figcaption>{lines[++i].trim().replace(/^\*|\*$/g, "")}</figcaption>}</figure>);
       i++; continue;
     }
     if (line.startsWith("|")) {
