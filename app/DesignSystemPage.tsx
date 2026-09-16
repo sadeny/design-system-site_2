@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { hmiFrameworkDocuments } from "./hmi-framework-documents-chatgpt";
+import { MarkdownDocument } from "./MarkdownDocument";
 
 type ModuleId = string;
 type Language = "zh" | "en";
@@ -18,6 +20,7 @@ type ModulePage = {
   status?: string;
   items: ContentItem[];
   sections?: RichSection[];
+  markdown?: string;
   noteTitle: string;
   note: string;
 };
@@ -63,7 +66,7 @@ function componentPage(code: string, title: string, description: string): Module
 
 const modulePages: Record<ModuleId, ModulePage> = {
   overview: {
-    eyebrow: "1 · OVERVIEW", title: "Design System 框架结构", accent: "#0878e6", status: "网站已同步",
+    eyebrow: "1 · OVERVIEW", title: "Design System 框架结构", accent: "#0878e6",
     lead: "介绍 Design System 的定位、范围与整体内容，并以七个一级栏目组织设计原则、语言、模式、组件和资源。",
     items: [
       item("2", "设计原则", "定义各类产品与平台的设计原则。"),
@@ -163,8 +166,8 @@ const modulePages: Record<ModuleId, ModulePage> = {
   "pattern-exterior": { eyebrow: "4.1.7 · HMI PATTERNS", title: "车外 HMI", accent: "#19a76d", lead: "定义车辆外部的人机交互方式。", items: [item("4.1.7.1", "灯光", "通过车外灯光传递车辆状态和意图。"), item("4.1.7.2", "语音交互", "定义车辆外部的语音输入与反馈方式。")], noteTitle: "外部沟通", note: "车外 HMI 需要让行人、乘员和周边交通参与者清晰理解车辆状态与意图。" },
   "resource-components": { eyebrow: "6.1 · RESOURCES", title: "组件库", accent: "#e87518", lead: "提供不同终端可复用的组件资源。", items: [item("6.1.1", "ABT", "提供 ABT 终端的组件资源。"), item("6.1.2", "后排", "提供后排终端的组件资源。"), item("6.1.3", "HUD", "提供 HUD 终端的组件资源。")], noteTitle: "资源交付", note: "组件库应与设计组件规范保持对应，并标明适用终端、版本和使用状态。" },
   "resource-icons": { eyebrow: "6.2 · RESOURCES", title: "图标库", accent: "#8a5cf5", lead: "集中管理和提供统一的图标资源。", items: [item("GENERAL", "通用基础图标", "提供跨场景复用的基础功能图标。"), item("DRIVING", "驾驶与车控图标", "提供驾驶、车辆状态与控制相关图标。"), item("EXTENDED", "扩展图标", "提供业务与终端所需的扩展图标。")], noteTitle: "统一来源", note: "图标库是设计与开发引用图标的唯一资源入口，并与图标规范保持版本同步。" },
-  terminology: { eyebrow: "7.1 · OTHER", title: "专用术语表", accent: "#59616d", lead: "统一 Design System 中的专业术语及其解释。", items: [item("PRODUCT", "产品术语", "统一 HMI、APP、Web 和车辆相关概念。"), item("DESIGN", "设计术语", "统一组件、模式、状态、变体和设计语言概念。"), item("TECH", "技术术语", "统一平台、资源、实现与交付相关概念。")], noteTitle: "共同语言", note: "术语表用于减少产品、设计、开发与合作团队之间的理解偏差。" },
-  naming: { eyebrow: "7.2 · OTHER", title: "命名规范", accent: "#59616d", lead: "统一文件、资源和设计对象的命名方式。", items: [item("FILES", "文件命名", "定义文档、图片和交付文件的命名规则。"), item("DESIGN", "设计对象", "定义页面、组件、变体、图层和变量命名。"), item("TOKENS", "资源与 Token", "定义图标、组件库和设计 Token 的命名结构。")], noteTitle: "可查找、可维护", note: "命名应稳定、语义清晰、可扩展，并支持跨工具与跨团队协作。" },
+  terminology: { eyebrow: "7.1 · OTHER", title: "专用术语表", accent: "#59616d", lead: "统一 HMI 设计规范中的专业术语及其解释。", items: [item("PRODUCT", "产品术语", "统一 HMI 与车辆相关概念。"), item("DESIGN", "设计术语", "统一 HMI 组件、模式、状态、变体和设计语言概念。"), item("TECH", "技术术语", "统一 HMI 平台、资源、实现与交付相关概念。")], noteTitle: "HMI 共同语言", note: "术语表用于减少 HMI 产品、设计、开发与合作团队之间的理解偏差。" },
+  naming: { eyebrow: "7.2 · OTHER", title: "命名规范", accent: "#59616d", lead: "统一 HMI 文档、资源和设计对象的命名方式。", items: [item("FILES", "文件命名", "定义 HMI 文档、图片和交付文件的命名规则。"), item("DESIGN", "设计对象", "定义 HMI 页面、组件、变体、图层和变量命名。"), item("TOKENS", "资源与 Token", "定义 HMI 图标、组件库和设计 Token 的命名结构。")], noteTitle: "可查找、可维护", note: "HMI 命名应稳定、语义清晰、可扩展，并支持跨工具与跨团队协作。" },
   changelog: { eyebrow: "7.3 · OTHER", title: "更新日志", accent: "#59616d", lead: "记录 Design System 的版本和内容变更。", items: [item("2026.08.06", "框架结构重构", "重构七个一级栏目，更新设计原则、语言、模式、组件、资源和其他结构及编号。"), item("WEBSITE", "网站同步", "网站导航与模块内容已同步最新框架结构。")], noteTitle: "同步状态", note: "当前网站已同步最新框架；后续框架更新但网站未同步时，状态标签将显示“待更新”。" },
 };
 
@@ -210,7 +213,7 @@ modulePages.overview.sections = [
     title: t("内容构成", "What it includes"),
     subsections: [
       { title: t("设计模式", "Design Patterns"), paragraphs: [t("设计模式是针对产品中反复出现的系统、场景或交互问题所形成的通用解决思路。它帮助设计师理解一个完整体验应该如何组织，而不只关注单个页面或组件。", "Design patterns are reusable approaches to recurring system, scenario, and interaction problems. They explain how to organize a complete experience beyond a single screen or component.")], examples: [
-        { label: t("系统框架", "System Framework"), targetId: "pattern-system" }, { label: t("告警体系", "Alert System"), targetId: "pattern-system--4-1-3-7" }, { label: t("语音体系", "Voice System"), targetId: "pattern-voice" },
+        { label: t("HMI 核心基础", "HMI Core Foundations"), targetId: "pattern-hmi-core" }, { label: t("告警体系", "Alert System"), targetId: "pattern-alert" }, { label: t("语音体系", "Voice System"), targetId: "pattern-voice" },
       ] },
       { title: t("设计组件", "Components"), paragraphs: [t("设计组件是组成界面的基础单元。每个组件具有明确的用途、结构、状态和交互行为，可以在不同页面和场景中重复使用。", "Components are the basic building blocks of an interface. Each has a defined purpose, anatomy, states, and behavior for reuse across screens and scenarios.")], examples: [
         { label: t("Button", "Button"), targetId: "component-5-1" }, { label: t("Dialog", "Dialog"), targetId: "component-5-2" }, { label: t("Slider", "Slider"), targetId: "component-5-5" },
@@ -256,11 +259,51 @@ modulePages["principle-hmi"].sections = [{
 }];
 modulePages["section-principles"] = modulePages["principle-hmi"];
 
-modulePages["language-interaction"].title = "多模态交互";
+modulePages["language-interaction"].title = "交互方式";
 modulePages["language-interaction"].lead = "定义视觉、语音、触控、手势与其他输入输出方式协同工作的交互规范。";
-modulePages["language-core"].title = "主题设计元素-待定";
+modulePages["language-core"].title = "主题设计元素（待定）";
 modulePages["language-core"].lead = "用于收纳具有主题识别度的 HMI 设计元素；当前章节结构与命名仍在确认中。";
 modulePages["language-core"].status = "待定";
+
+modulePages["design-dna"].eyebrow = "2.1 · DESIGN DNA";
+modulePages["design-dna"].title = "设计 DNA（待定）";
+modulePages["design-dna"].status = "待定";
+modulePages["principle-hmi"].eyebrow = "2.2 · HMI DESIGN PRINCIPLES";
+modulePages["principle-hmi"].title = "HMI 设计原则";
+modulePages["principle-hmi"].lead = "定义 HMI Guidelines 共同遵循的设计价值、判断标准与座舱体验原则。";
+modulePages["language-type"].eyebrow = "3.1 · TYPOGRAPHY";
+modulePages["language-color"].eyebrow = "3.2 · COLOR";
+modulePages["language-icons"].eyebrow = "3.3 · ICONS";
+modulePages["language-icons"].items = [];
+modulePages["language-visual"].eyebrow = "3.4 · BASE STYLES";
+modulePages["language-visual"].title = "基础样式";
+modulePages["language-visual"].items = [item("3.4.1", "形状", "定义基础形态及其应用方式。"), item("3.4.2", "投影", "定义层级、悬浮和空间关系的阴影表现。"), item("3.4.3", "圆角", "定义界面元素的圆角规格。"), item("3.4.4", "间距", "定义元素之间的空间关系。"), item("3.4.5", "网格", "定义页面布局和内容对齐规则。")];
+modulePages["language-interaction"].eyebrow = "3.5 · INTERACTION";
+modulePages["language-interaction"].items = [item("3.5.1", "手势", "定义通过手势进行输入、操作和反馈的交互方式。"), item("3.5.2", "语音", "定义语音输入、反馈和交互方式。"), item("3.5.3", "TUI", "定义实体按键、旋钮、拨杆、开关、触控板及其他可触知硬件控制装置的交互原则，以及其与 GUI、语音和车辆状态的协同关系。")];
+modulePages["language-sound"].eyebrow = "3.6 · SOUND";
+modulePages["language-motion"].eyebrow = "3.7 · MOTION";
+modulePages["language-dark"].eyebrow = "4.9 · DARK THEME";
+modulePages["language-localization"].eyebrow = "4.10 · LOCALIZATION";
+modulePages["pattern-system"].eyebrow = "4.1 · HMI PATTERNS";
+modulePages["pattern-system"].title = "核心框架";
+modulePages["pattern-system"].lead = "定义 HMI 系统级界面与功能的核心组织方式。";
+modulePages["pattern-system"].items = [item("4.1.1", "核心布局定义", "定义系统核心界面的布局方式。"), item("4.1.2", "层级体系", "定义页面、浮层和信息之间的层级关系。"), item("4.1.3", "Launcher", "定义系统启动器的结构与使用方式。"), item("4.1.4", "APP 体系", "定义车载 APP 的组织和运行框架。"), item("4.1.5", "通知体系", "定义系统通知的类型、层级和呈现方式。"), item("4.1.6", "模态化", "定义模态内容的触发、展示和退出方式。"), item("4.1.7", "告警体系", "定义告警信息的等级和反馈方式。"), item("4.1.8", "APP List", "定义应用列表的结构与展示方式。"), item("4.1.9", "功能面板", "组织下拉面板、空调面板等快捷控制入口。"), item("4.1.10", "Widget", "定义系统小组件的内容、布局和使用方式。")];
+modulePages["pattern-human"].eyebrow = "4.2 · HMI PATTERNS";
+modulePages["pattern-human"].title = "HMI 人机交互基础";
+modulePages["pattern-human"].items = [item("4.2.1", "人机区域", "划分人与界面发生交互的空间区域。"), item("4.2.2", "多用户交互", "定义多个用户共同使用系统时的交互方式。")];
+modulePages["pattern-composition"].eyebrow = "4.3 · HMI PATTERNS";
+modulePages["pattern-composition"].title = "HMI 系统核心组成";
+modulePages["pattern-composition"].lead = "定义 HMI 系统的核心组成和屏幕类型。";
+modulePages["pattern-composition"].items = [item("4.3.1", "FID", "定义 FID 界面的信息呈现与设计模式。"), item("4.3.2", "Smart Surface", "定义 Smart Surface 的信息呈现与交互模式。"), item("4.3.3", "HUD", "定义抬头显示界面的设计模式。"), item("4.3.4", "ABT", "定义 ABT 界面的设计模式。"), item("4.3.5", "Co-driver Screen", "定义副驾驶屏界面的设计模式。"), item("4.3.6", "Roof Screen", "定义车顶屏界面的设计模式。"), item("4.3.7", "Rear Console Screen", "定义后排控制屏界面的设计模式。"), item("4.3.8", "Arm Rest Screen", "定义扶手屏界面的设计模式。")];
+modulePages["pattern-3d"].eyebrow = "4.4 · HMI PATTERNS";
+modulePages["pattern-3d"].items = modulePages["pattern-3d"].items.map((entry, index) => ({ ...entry, meta: `4.4.${index + 1}` }));
+modulePages["pattern-voice"].eyebrow = "4.5 · HMI PATTERNS";
+modulePages["pattern-voice"].items = modulePages["pattern-voice"].items.map((entry, index) => ({ ...entry, meta: `4.5.${index + 1}` }));
+modulePages["pattern-function"].eyebrow = "4.6 · HMI PATTERNS";
+modulePages["pattern-function"].items = modulePages["pattern-function"].items.map((entry, index) => ({ ...entry, meta: `4.6.${index + 1}` }));
+modulePages["pattern-exterior"].eyebrow = "4.7 · HMI PATTERNS";
+modulePages["pattern-exterior"].items = modulePages["pattern-exterior"].items.map((entry, index) => ({ ...entry, meta: `4.7.${index + 1}` }));
+modulePages["language-core"].eyebrow = "4.8 · HMI PATTERNS";
 
 const codeId = (code: string) => code.replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-|-$/g, "");
 const leaf = (parentId: string, code: string, title: string, body: string, children?: NavNode[]): NavNode => ({ id: `${parentId}--${codeId(code)}`, label: `${code} ${title}`, body, children });
@@ -270,31 +313,121 @@ const moduleNode = (id: string, label: string, nested: Record<string, NavNode[]>
 });
 
 const navigation: NavNode[] = [
+  { id: "explanation", label: "0. 说明", body: "说明当前 HMI Guidelines 的规范状态、适用边界与后续维护方式。", accent: "#d97706" },
   { id: "overview", label: "1. overview", body: modulePages.overview.lead, accent: "#0878e6" },
-  { id: "design-dna", label: "2. Design DNA", body: modulePages["design-dna"].lead, accent: "#6b63ff" },
-  { id: "section-principles", label: "2. 设计原则", body: "用于定义 HMI Guidelines 共同遵循的设计价值与座舱体验原则。", accent: "#18a66a" },
+  { id: "section-ideas", label: "2. 设计理念", body: "用于定义 HMI Guidelines 的核心设计思想。", accent: "#18a66a", children: [
+    { id: "design-dna", label: "2.1 设计 DNA（待定）", body: modulePages["design-dna"].lead },
+    { id: "section-principles", label: "2.2 HMI 设计原则", body: modulePages["principle-hmi"].lead },
+  ] },
   { id: "section-language", label: "3. 设计语言", body: "用于定义 Design System 的统一感知与交互表达。", accent: "#695cff", children: [
-    moduleNode("language-brand", "3.1 品牌规范"), moduleNode("language-type", "3.2 字体"), moduleNode("language-color", "3.3 色彩"), moduleNode("language-icons", "3.4 图标"), moduleNode("language-visual", "3.5 通用视觉样式"), moduleNode("language-interaction", "3.6 多模态交互"), moduleNode("language-sound", "3.7 声音"), moduleNode("language-motion", "3.8 动效"), moduleNode("language-dark", "3.9 深色主题"), moduleNode("language-localization", "3.10 国际化 / 本地化"),
+    moduleNode("language-type", "3.1 字体"), moduleNode("language-color", "3.2 色彩"), moduleNode("language-icons", "3.3 图标"), moduleNode("language-visual", "3.4 基础样式"), moduleNode("language-interaction", "3.5 交互方式"), moduleNode("language-sound", "3.6 声音"), moduleNode("language-motion", "3.7 动效"),
   ] },
   { id: "section-patterns", label: "4. 设计模式", body: "用于沉淀常见场景下可复用的设计解决方案。", accent: "#00a0a8", children: [
-      moduleNode("pattern-composition", "4.1 HMI 构成"), moduleNode("pattern-human", "4.2 人机交互基础"),
-      moduleNode("pattern-system", "4.3 系统框架", {
-        "4.1.3.4": [leaf("pattern-system--4-1-3-4", "4.1.3.4.1", "策略", "用于定义 APP 体系的整体设计策略。"), leaf("pattern-system--4-1-3-4", "4.1.3.4.2", "APP 框架", "用于定义 APP 的通用结构框架。")],
-        "4.1.3.9": [leaf("pattern-system--4-1-3-9", "4.1.3.9.1", "下拉面板", "用于定义下拉快捷面板的结构和交互。"), leaf("pattern-system--4-1-3-9", "4.1.3.9.2", "空调面板", "用于定义空调控制面板的结构和交互。")],
+      moduleNode("pattern-system", "4.1 核心框架", {
+        "4.1.4": [leaf("pattern-system--4-1-4", "4.1.4.1", "策略", "用于定义 APP 体系的整体设计策略。"), leaf("pattern-system--4-1-4", "4.1.4.2", "APP 框架", "用于定义 APP 的通用结构框架。")],
+        "4.1.9": [leaf("pattern-system--4-1-9", "4.1.9.1", "下拉面板", "用于定义下拉快捷面板的结构和交互。"), leaf("pattern-system--4-1-9", "4.1.9.2", "空调面板", "用于定义空调面板的结构和交互。")],
       }),
+      moduleNode("pattern-human", "4.2 HMI 人机交互基础"), moduleNode("pattern-composition", "4.3 HMI 系统核心组成"),
       moduleNode("pattern-3d", "4.4 3D 体系"), moduleNode("pattern-voice", "4.5 语音体系", {
-        "4.1.5.1": [leaf("pattern-voice--4-1-5-1", "4.1.5.1.1", "逻辑状态", "用于定义 Avatar 在不同语音阶段的状态变化。")],
+        "4.5.1": [leaf("pattern-voice--4-5-1", "4.5.1.1", "逻辑状态", "用于定义 Avatar 在不同语音阶段的状态变化。")],
       }),
       moduleNode("pattern-function", "4.6 功能模式", {
-        "4.1.6.6": [leaf("pattern-function--4-1-6-6", "4.1.6.6.1", "个性化", "用于定义与账号关联的个性化体验。")],
+        "4.6.6": [leaf("pattern-function--4-6-6", "4.6.6.1", "个性化", "用于定义与账号关联的个性化体验。")],
       }), moduleNode("pattern-exterior", "4.7 车外 HMI"),
-    moduleNode("language-core", "4.8 主题设计元素-待定", {
-      "3.11.3": [leaf("language-core--3-11-3", "3.11.3.1", "智驾相关元素", "用于表达智能驾驶相关状态和信息。"), leaf("language-core--3-11-3", "3.11.3.2", "车道引导箭头", "用于表达车辆与目标路径之间的引导方向。")],
-    }),
+    moduleNode("language-core", "4.8 主题设计元素（待定）"), moduleNode("language-dark", "4.9 深色主题"), moduleNode("language-localization", "4.10 国际化 / 本地化"),
   ] },
   { id: "section-components", label: "5. 设计组件", body: "用于收录可复用的界面组件及其使用规范。", accent: "#ff7849", children: componentDescriptions.map(([code, title]) => ({ id: `component-${code.replace(".", "-")}`, label: `${code} ${title}`, body: modulePages[`component-${code.replace(".", "-")}`].lead })) },
-  { id: "section-other", label: "7. 其他", body: "用于收录术语、命名等支持性内容。", accent: "#59616d", children: [{ id: "terminology", label: "7.1 专用术语表", body: modulePages.terminology.lead }, { id: "naming", label: "7.2 命名规范", body: modulePages.naming.lead }] },
+  { id: "section-other", label: "7. 其他", body: "用于收录术语、命名和更新记录等支持性内容。", accent: "#59616d", children: [{ id: "terminology", label: "7.1 专用术语表", body: modulePages.terminology.lead }, { id: "naming", label: "7.2 命名规范", body: modulePages.naming.lead }, { id: "changelog", label: "7.3 更新记录", body: "记录 HMI 设计规范的重要更新及维护信息。" }] },
 ];
+
+// Match the current HMI-specific framework while preserving established page IDs.
+const languageRoot = navigation.find(node => node.id === "section-language")!;
+const patternsRoot = navigation.find(node => node.id === "section-patterns")!;
+const patternById = new Map(patternsRoot.children!.map(node => [node.id, node]));
+const node = (id: string, label: string, body: string, children?: NavNode[]): NavNode => ({ id, label, body, children });
+const human = patternById.get("pattern-human")!;
+const composition = patternById.get("pattern-composition")!;
+human.label = "4.1 HMI 人机交互基础";
+composition.label = "4.2.1 核心组成";
+human.children = [
+  human.children![0],
+  node("pattern-multi-scenario", "4.1.1.2 多场景人机交互", "用于定义 HMI 在不同用车场景、车辆状态和任务情境下的人机交互方式。"),
+  human.children![1],
+];
+human.children[0].label = "4.1.1 人机关系";
+human.children[0].body = "用于划分人与界面发生交互的空间区域。";
+composition.children = undefined;
+modulePages["pattern-composition"].items = [
+  item("PART", "FID", "即传统的仪表，布局在方向盘前方，用于呈现驾驶相关信息。"),
+  item("PART", "Smart Surface", "让屏幕硬件与座舱内饰材质融合，并在表面显示数字信息。"),
+  item("PART", "HUD", "用于定义抬头显示界面的信息呈现与设计模式。"),
+  item("PART", "ABT", "中控屏，用于定义核心功能的信息呈现与设计模式。"),
+  item("PART", "Co-driver Screen", "副驾屏，用于定义副驾驶屏界面的信息呈现与设计模式。"),
+  item("PART", "Roof Screen", "可收起、可展开的后排吸顶屏。"),
+  item("PART", "Rear Console Screen", "布局在前排左右座椅之间的后排中控屏。"),
+  item("PART", "Arm Rest Screen", "布局在后排座椅扶手上的屏幕。"),
+];
+const systemFramework = node("pattern-hmi-core", "4.2 HMI 系统核心框架", "用于定义 HMI 系统的核心组成、核心框架及多屏联动关系。", [
+  composition,
+  node("pattern-core-layout", "4.2.2 框架定义", "用于定义整个 HMI 系统中不同媒介屏幕的框架布局，并作为所有功能模块共同遵循的全局布局基础。"),
+  node("pattern-multiscreen", "4.2.3 多屏联动", "用于定义座舱内不同屏幕之间的信息协同、任务接续与交互联动方式。"),
+]);
+const voiceSystem = patternById.get("pattern-voice")!;
+voiceSystem.children = [
+  node("voice-principles", "4.3.1 设计原则和理念", "用于定义当前具体语音 VUI 的设计理念、体验目标与设计原则，为语音体系的具体设计提供判断依据。"),
+  node("voice-flow", "4.3.2 语音交互通用流程", "用于定义从唤醒、输入、识别、理解、执行到反馈的通用交互流程。"),
+  node("voice-framework", "4.3.3 语音体系核心框架", "用于定义语音体系的核心组成、信息关系及各交互阶段的协同框架。"),
+  node("voice-avatar", "4.3.4 avatar设计", "用于定义语音助手 avatar 的形象、状态表达及其在交互过程中的呈现方式。"),
+  node("voice-key-features", "4.3.5 语音交互重点功能", "用于收录多音区语音交互、可见即可说、语音免唤醒和语音双工等重点功能设计。"),
+];
+languageRoot.children!.unshift(node("language-accessibility", "3.1 Accessibility｜普适性", "用于定义覆盖不同用户、用户状态、座舱位置、车辆场景、环境条件和硬件能力的基础设计要求与检查标准。"));
+languageRoot.children!.splice(5, 0, patternById.get("pattern-3d")!);
+const interactionMode = languageRoot.children!.find(entry => entry.id === "language-interaction");
+if (interactionMode) interactionMode.label = "3.7 多模态交互";
+patternsRoot.children = [
+  human, systemFramework, voiceSystem,
+  node("pattern-hierarchy", "4.4 层级体系", "用于定义页面、浮层和信息之间的层级关系。"),
+  node("pattern-app-system", "4.5 APP应用体系", "用于定义车载 APP 的整体策略、通用 APP 框架及第三方应用框架。"),
+  node("pattern-notification", "4.7 通知体系", "用于定义系统通知的类型、层级和呈现方式。"),
+  node("pattern-alert", "4.8 告警体系", "用于定义告警信息的等级和反馈方式。"),
+  node("pattern-audio-strategy", "4.9 音频策略体系", "用于定义系统声音、提示音、告警音及其他音频反馈的使用策略、优先级和协同关系。"),
+  node("pattern-app-list", "4.10 APPList", "用于定义应用列表的结构与展示方式。"),
+  node("pattern-home-strategy", "4.11 Home键策略", "用于定义 Home 键的功能定位、触发逻辑、返回目标、状态反馈及跨场景一致性策略。"),
+  node("pattern-function-panel", "4.11 功能面板", "用于组织常用功能和快捷控制入口。", [node("pattern-quick-panel", "4.11.1 下拉面板", "用于定义下拉快捷面板的结构和交互。"), node("pattern-climate-panel", "4.11.2 空调面板", "用于定义空调控制面板的结构和交互。")]),
+  node("pattern-widget", "4.12 Widget", "用于定义系统小组件的内容、布局和使用方式。"),
+  node("pattern-showroom", "4.13 展车模式", "用于定义车辆展示场景下的系统体验。"),
+  node("pattern-charging", "4.14 充电模式", "用于定义车辆充电场景下的信息呈现、状态反馈与交互方式。"),
+  node("pattern-third-space", "4.15 第三空间模式", "用于定义车辆在非驾驶状态下作为生活与休闲空间时的场景体验和交互方式。"),
+  node("pattern-activation-oobe", "4.16 激活引导/OOBE体系", "用于定义系统或功能首次激活时的引导流程与首次使用体验。"),
+  node("pattern-startup-motion", "4.17 开机动画", "用于定义系统启动过程中的动画表现。"),
+  node("pattern-feature-guidance", "4.18 功能引导体系", "用于帮助用户理解和使用具体功能。"),
+  node("pattern-account", "4.19 账号体系", "用于定义账号登录、身份和相关体验。"),
+  node("pattern-basic-driving", "4.20 基础驾驶", "用于定义基础驾驶场景下的界面与交互模式。"),
+  node("pattern-assisted-driving", "4.21 辅助驾驶体系", "用于定义辅助驾驶场景下的信息呈现、状态反馈、功能控制与人机协同方式。"),
+  node("pattern-assistance-view", "4.22 辅助影像体系", "用于定义车辆辅助影像的展示和操作模式。"),
+  node("pattern-lighting", "4.23 灯光交互", "用于定义通过车外灯光传递车辆状态、反馈和意图的交互方式。"),
+  patternById.get("language-core")!, patternById.get("language-dark")!, patternById.get("language-localization")!,
+  node("pattern-tui", "4.27 TUI 体系", "用于定义实体硬件控件的操作模式、功能映射及其与界面、语音和车辆状态的协同方式。"),
+];
+patternById.get("pattern-3d")!.label = "3.5 3D体系";
+patternById.get("language-localization")!.label = "4.26 国际化/本地化";
+modulePages["pattern-exterior"].items = [];
+function synchronizeNumbers(nodes: NavNode[], prefix: string) {
+  nodes.forEach((entry, index) => {
+    const code = `${prefix}.${index + 1}`;
+    entry.label = `${code} ${entry.label.replace(/^\d+(?:\.\d+)*\.?\s*/, "")}`;
+    if (entry.children?.length) synchronizeNumbers(entry.children, code);
+    const page = modulePages[entry.id];
+    if (page) {
+      page.eyebrow = `${code} · FRAMEWORK`;
+      page.title = entry.label.replace(/^\d+(?:\.\d+)*\.?\s*/, "");
+      page.lead = entry.body ?? page.lead;
+      if (entry.children?.length) page.items = entry.children.map(child => { const [meta, ...title] = child.label.split(" "); return item(meta, title.join(" "), child.body ?? ""); });
+    }
+  });
+}
+synchronizeNumbers(languageRoot.children!, "3");
+synchronizeNumbers(patternsRoot.children, "4");
 
 const flattenNodes = (nodes: NavNode[]): NavNode[] => nodes.flatMap((node) => [node, ...flattenNodes(node.children ?? [])]);
 const allNavItems = flattenNodes(navigation);
@@ -325,17 +458,47 @@ function registerNavigationPages(nodes: NavNode[], inheritedAccent = "#0878e6") 
   }
 }
 registerNavigationPages(navigation);
+modulePages["pattern-app-system"].items = [
+  item("PART", "策略", "用于定义 APP 应用体系的整体设计策略。"),
+  item("PART", "APP 框架", "用于定义车载 APP 的通用结构框架。"),
+  item("PART", "第三方应用框架", "用于定义第三方应用接入 HMI 系统时的界面框架、信息组织、交互边界及协同规则。"),
+];
+for (const entry of allNavItems) {
+  const code = entry.label.match(/^(\d+(?:\.\d+)*)\.?\s/)?.[1];
+  const document = code ? hmiFrameworkDocuments[code] : undefined;
+  if (!document) continue;
+  const title = document.title === "卡片（待确认）" ? "卡片（待定）" : document.title;
+  entry.label = `${code} ${title}`;
+  modulePages[entry.id].eyebrow = `${code} · FRAMEWORK`;
+  modulePages[entry.id].title = title;
+  modulePages[entry.id].lead = document.lead;
+  modulePages[entry.id].markdown = document.markdown;
+}
+
+modulePages.explanation.status = "草稿";
+
+modulePages.changelog.title = "更新记录";
+modulePages.changelog.lead = "集中记录 HMI 设计规范的重要更新，便于追溯框架和内容的变化。";
+modulePages.changelog.markdown = `## HMI 规范更新记录
+
+| 序号 | 更新主要内容 | 更新时间 | 更新作者 | 备注说明 |
+|---|---|---|---|---|
+| 1 | 初步更新 HMI 规范框架 | 2026-09-09 | Fan | 初步梳理 HMI 框架，整体框架待讨论 |`;
 
 function BrandGlyph() { return <span className="brand-glyph" aria-hidden="true"><i /><i /><i /></span>; }
 const displayNodeLabel = (label: string) => label.replace(/^\d+(?:\.\d+)*\.?\s*/, "");
 const englishNames: Record<string, string> = {
-  overview: "Overview", "设计原则": "Design Principles", "HMI 设计": "HMI Design", "APP 设计": "App Design", "Web 设计": "Web Design",
+  "HMI 人机交互基础": "HMI Interaction Foundations", "HMI 系统核心框架": "HMI Core System Framework", "核心组成": "Core Composition", "框架定义": "Framework Definition", "语音交互的设计原则和理念": "Voice Design Principles and Philosophy", "语音交互通用流程": "General Voice Interaction Flow", "语音体系核心框架": "Voice System Core Framework", "avatar设计": "Avatar Design", "语音交互重点功能": "Key Voice Features", "多音区语音交互": "Multi-zone Voice Interaction", "可见即可说": "See It, Say It", "语音免唤醒": "Wake-word-free Voice", "语音双工": "Full-duplex Voice", "第三方应用框架": "Third-party App Framework", "灯光交互": "Lighting Interaction",
+  "HMI 人机交互关系": "HMI Interaction Relationships", "人机关系": "Human-machine Relationships", "HMI 核心框架定义": "HMI Core Framework Definition", "多屏联动": "Multi-screen Coordination", "充电模式": "Charging Mode", "第三空间模式": "Third-space Mode", "辅助驾驶体系": "Assisted Driving System", "车外HMI交互": "Exterior HMI Interaction",
+  "HMI 核心基础": "HMI Core Foundations", "音频策略体系": "Audio Strategy System", "TUI 体系": "TUI System", "激活引导/OOBE体系": "Activation / OOBE System", "功能引导体系": "Feature Guidance System", "辅助影像体系": "Assistance View System",
+  "手势": "Gestures", "TUI": "TUI", "HMI 系统": "HMI System",
+  overview: "Overview", "说明": "About", "设计原则": "Design Principles", "HMI 设计": "HMI Design", "APP 设计": "App Design", "Web 设计": "Web Design",
   "设计语言": "Design Language", "品牌规范": "Brand Guidelines", "字体": "Typography", "色彩": "Color", "图标": "Icons", "通用基础图标": "General Icons", "驾驶图标": "Driving Icons", "车控图标": "Vehicle Control Icons", "拓展图标": "Extended Icons",
-  "通用视觉样式": "Common Visual Styles", "形状": "Shape", "投影": "Shadow", "圆角": "Corner Radius", "间距": "Spacing", "网格": "Grid", "交互方式": "Interaction", "多模态交互": "Multimodal Interaction", "语音": "Voice", "声音": "Sound", "动效": "Motion", "深色主题": "Dark Theme", "国际化 / 本地化": "Internationalization / Localization",
-  "核心视觉元素": "Core Visual Elements", "主题设计元素-待定": "Themed Design Elements — TBD", "车模": "Vehicle Model", "导航图标": "Navigation Icons", "导航 / 智驾引导线": "Navigation / Assisted Driving Guidance", "智驾相关元素": "Assisted Driving Elements", "车道引导箭头": "Lane Guidance Arrows", "Home 按键": "Home Button", "启动 P 档?": "Startup / Park",
-  "设计模式": "Design Patterns", "HMI 构成": "HMI Composition", "核心原则": "Core Principles", "人机交互基础": "Human–Machine Interaction", "人机区域": "Interaction Zones", "多用户交互": "Multi-user Interaction", "系统框架": "System Framework", "核心布局定义": "Core Layout", "层级体系": "Hierarchy", "APP 体系": "App System", "策略": "Strategy", "APP 框架": "App Framework", "通知体系": "Notification System", "模态化": "Modality", "告警体系": "Alert System", "功能面板": "Function Panels", "下拉面板": "Quick Panel", "空调面板": "Climate Panel",
-  "3D 体系": "3D System", "感知信息": "Perception Information", "地理信息": "Geographic Information", "功能辅助信息": "Supporting Information", "语音体系": "Voice System", "逻辑状态": "Logic States", "GUI 结果卡片": "GUI Result Cards", "功能模式": "Functional Modes", "展车模式": "Showroom Mode", "激活引导": "Activation Guide", "开机动画": "Startup Animation", "功能引导": "Feature Guide", "账号体系": "Account System", "个性化": "Personalization", "基础驾驶": "Basic Driving", "辅助影像": "Assistance View", "车外 HMI": "Exterior HMI", "灯光": "Lighting", "语音交互": "Voice Interaction",
-  "设计组件": "Components", "卡片": "Card", "进度条": "Progress Bar", "设计资源": "Resources", "组件库": "Component Libraries", "后排": "Rear Seat", "图标库": "Icon Library", "其他": "Other", "专用术语表": "Glossary", "命名规范": "Naming Guidelines", "更新日志": "Changelog",
+  "设计理念": "Design Philosophy", "设计 DNA（待定）": "Design DNA (TBD)", "HMI 设计原则": "HMI Design Principles", "基础样式": "Base Styles", "形状": "Shape", "投影": "Shadow", "圆角": "Corner Radius", "间距": "Spacing", "网格": "Grid", "交互方式": "Interaction", "语音": "Voice", "声音": "Sound", "动效": "Motion", "深色主题": "Dark Theme", "国际化 / 本地化": "Internationalization / Localization",
+  "核心视觉元素": "Core Visual Elements", "主题设计元素（待定）": "Themed Design Elements (TBD)", "车模": "Vehicle Model", "导航图标": "Navigation Icons", "导航 / 智驾引导线": "Navigation / Assisted Driving Guidance", "智驾相关元素": "Assisted Driving Elements", "车道引导箭头": "Lane Guidance Arrows", "Home 按键": "Home Button", "启动 P 档?": "Startup / Park",
+  "设计模式": "Design Patterns", "HMI 系统核心组成": "HMI Core System Composition", "HMI 人机交互基础": "HMI Interaction Foundations", "人机区域": "Interaction Zones", "多场景人机交互": "Multi-scenario Interaction", "多用户交互": "Multi-user Interaction", "核心框架": "Core Framework", "核心布局定义": "Core Layout", "层级体系": "Hierarchy", "APP 体系": "App System", "策略": "Strategy", "APP 框架": "App Framework", "通知体系": "Notification System", "模态化": "Modality", "告警体系": "Alert System", "功能面板": "Function Panels", "下拉面板": "Quick Panel", "空调面板": "Climate Panel",
+  "3D 体系": "3D System", "3D体系": "3D System", "国际化/本地化": "Internationalization / Localization", "感知信息": "Perception Information", "地理信息": "Geographic Information", "功能辅助信息": "Supporting Information", "语音体系": "Voice System", "逻辑状态": "Logic States", "GUI 结果卡片": "GUI Result Cards", "功能模式": "Functional Modes", "展车模式": "Showroom Mode", "激活引导": "Activation Guide", "开机动画": "Startup Animation", "功能引导": "Feature Guide", "账号体系": "Account System", "个性化": "Personalization", "基础驾驶": "Basic Driving", "辅助影像": "Assistance View", "车外 HMI": "Exterior HMI", "灯光": "Lighting", "语音交互": "Voice Interaction",
+  "设计组件": "Components", "卡片": "Card", "进度条": "Progress Bar", "设计资源": "Resources", "组件库": "Component Libraries", "后排": "Rear Seat", "图标库": "Icon Library", "其他": "Other", "专用术语表": "Glossary", "命名规范": "Naming Guidelines", "更新记录": "Update Log", "更新日志": "Changelog",
   "用途与适用场景": "Purpose and Use Cases", "结构与变体": "Anatomy and Variants", "状态与行为": "States and Behavior", "使用规范": "Usage Guidelines", "内容结构": "Content Structure",
 };
 const localizeName = (value: string, language: Language) => language === "en" ? (englishNames[value] ?? value) : value;
@@ -359,9 +522,9 @@ function DetailModule({ page, language, isTopLevel, onSelect }: { page: ModulePa
   const title = localizeName(page.title, language);
   const hmiCopy = (value: string) => value.replaceAll("Design System", "HMI Guidelines");
   return <div className="module-page" style={{ "--module-accent": page.accent } as React.CSSProperties}>
-    <section className="module-hero"><div className="module-hero-grid"><div><p className="section-kicker">{cleanKicker(page.eyebrow)}</p><h1>{title}</h1><p>{language === "en" ? `Defines the scope, principles, and usage guidance for ${title}.` : hmiCopy(page.lead)}</p>{page.status && <span className="module-status">{language === "en" ? (page.status === "待定" ? "To be determined" : "Website synced") : page.status}</span>}</div></div></section>
-    {page.sections ? <div className="module-document">{page.sections.map((section, sectionIndex) => <section className="document-section" key={`${section.title.zh}-${sectionIndex}`}>
-      <div className="document-section-heading"><span>{String(sectionIndex + 1).padStart(2, "0")}</span><h2>{section.title[language]}</h2></div>
+    <section className="module-hero"><div className="module-hero-grid"><div><h1>{title}</h1><p>{language === "en" ? `Defines the scope, principles, and usage guidance for ${title}.` : hmiCopy(page.lead)}</p>{page.status && <span className={`module-status ${page.status === "草稿" ? "draft" : ""}`}>{language === "en" ? (page.status === "待定" ? "To be determined" : page.status === "草稿" ? "Status · Draft" : "Website synced") : page.status === "草稿" ? "当前状态 · 草稿" : page.status}</span>}</div></div></section>
+    {page.markdown ? <MarkdownDocument source={page.markdown} language={language} /> : page.sections ? <div className="module-document">{page.sections.map((section, sectionIndex) => <section className="document-section" key={`${section.title.zh}-${sectionIndex}`}>
+      <div className="document-section-heading"><h2>{section.title[language]}</h2></div>
       {section.tagline && <p className="document-tagline">{section.tagline[language]}</p>}
       {section.paragraphs?.map((paragraph, index) => <p className="document-paragraph" key={index}>{paragraph[language]}</p>)}
       {section.subsections && <div className="document-subsections">{section.subsections.map((subsection) => <article className="document-subsection" key={subsection.title.zh}>
@@ -369,13 +532,13 @@ function DetailModule({ page, language, isTopLevel, onSelect }: { page: ModulePa
         {subsection.paragraphs.map((paragraph, index) => <p key={index}>{paragraph[language]}</p>)}
         {subsection.examples && <div className="document-examples"><span>{language === "en" ? "Examples" : "典型示例"}</span>{subsection.examples.map((example) => <button key={example.targetId} onClick={() => onSelect(example.targetId)}>{example.label[language]} <i aria-hidden="true">↗</i></button>)}</div>}
       </article>)}</div>}
-      {section.refinements && <div className="document-refinements"><div className="document-refinement-heading"><span>{language === "en" ? "REFINEMENT" : "总则细化"}</span><h3>{language === "en" ? "Detailed HMI principles" : "HMI 体验中的具体细化"}</h3><p>{language === "en" ? "These principles translate the general foundation into concrete guidance for HMI experiences." : "以下原则将总则进一步转化为适用于 HMI 产品体验的具体指导。"}</p></div><div className="document-subsections">{section.refinements.map((subsection) => <article className="document-subsection" key={subsection.title.zh}><h3>{subsection.title[language]}</h3>{subsection.paragraphs.map((paragraph, index) => <p key={index}>{paragraph[language]}</p>)}</article>)}</div></div>}
+      {section.refinements && <div className="document-section document-refinement-section"><div className="document-section-heading"><h2>{language === "en" ? "Design details" : "设计细则"}</h2></div><p className="document-paragraph">{language === "en" ? "These details translate the general foundation into concrete guidance for HMI experiences." : "以下细则将设计总则进一步转化为适用于 HMI 产品体验的具体指导。"}</p><div className="document-subsections">{section.refinements.map((subsection) => <article className="document-subsection" key={subsection.title.zh}><h3>{subsection.title[language]}</h3>{subsection.paragraphs.map((paragraph, index) => <p key={index}>{paragraph[language]}</p>)}</article>)}</div></div>}
       {section.closing && <p className="document-closing">{section.closing[language]}</p>}
-    </section>)}</div> : <section className={`module-content-section ${isTopLevel ? "top-level-content" : ""}`}>{!isTopLevel && <div className="module-section-title"><p className="section-kicker">{language === "en" ? "IN THIS SECTION" : "本章节内容"}</p><h2>{language === "en" ? "Content Structure" : "内容结构"}</h2></div>}<div className="module-card-grid">{page.items.map((entry, index) => { const entryTitle = localizeName(entry.title, language); return <article className={`module-card ${isTopLevel ? "top-level-card" : ""}`} key={`${entry.meta}-${entry.title}`}><div className="module-card-index">{!isTopLevel && <span>{entry.meta}</span>}<i>{String(index + 1).padStart(2, "0")}</i></div><h3>{entryTitle}</h3><p>{language === "en" ? `Defines the structure, behavior, and usage guidance for ${entryTitle}.` : entry.body}</p>{isTopLevel ? <i className="module-card-arrow" aria-hidden="true">↗</i> : <span className="module-card-arrow" aria-hidden="true">↗</span>}</article>; })}</div></section>}
+    </section>)}</div> : <section className={`module-content-section ${isTopLevel ? "top-level-content" : ""}`}>{!isTopLevel && <div className="module-section-title"><h2>{language === "en" ? "Content Structure" : "内容结构"}</h2></div>}<div className="module-card-grid">{page.items.map((entry, index) => { const entryTitle = localizeName(entry.title, language); return <article className={`module-card ${isTopLevel ? "top-level-card" : ""}`} key={`${entry.meta}-${entry.title}`}><div className="module-card-index">{!isTopLevel && <span>{entry.meta}</span>}<i>{String(index + 1).padStart(2, "0")}</i></div><h3>{entryTitle}</h3><p>{language === "en" ? `Defines the structure, behavior, and usage guidance for ${entryTitle}.` : entry.body}</p>{isTopLevel ? <i className="module-card-arrow" aria-hidden="true">↗</i> : <span className="module-card-arrow" aria-hidden="true">↗</span>}</article>; })}</div></section>}
   </div>;
 }
 
-function HomePage({ language, onOpenPlatform, onOpenFeature }: { language: Language; onOpenPlatform: (platform: "hmi" | "web" | "app") => void; onOpenFeature: (page: FeaturePageId, module: string) => void }) {
+function HomePage({ language, onOpenPlatform, onOpenFeature }: { language: Language; onOpenPlatform: (platform: "hmi" | "web" | "app") => void; onOpenFeature: (page: FeaturePageId, module: string | null) => void }) {
   const pageRef = useRef<HTMLElement>(null);
   const heroRef = useRef<HTMLElement>(null);
   useEffect(() => {
@@ -398,26 +561,35 @@ function HomePage({ language, onOpenPlatform, onOpenFeature }: { language: Langu
   ];
   return <main className="home-page" ref={pageRef}>
     <section className="home-hero-card" ref={heroRef}>
-      <div className="home-hero-copy"><h1>Design System</h1><span>{language === "en" ? "Pursue the best design experience through clear, shared, and actionable guidance." : "以清晰、统一且可执行的设计指导，持续追求最佳的设计体验。"}</span><div className="home-hero-actions"><button onClick={() => onOpenPlatform("hmi")}>HMI Guidelines <i aria-hidden="true">→</i></button><button onClick={() => onOpenPlatform("web")}>Web Guidelines <i aria-hidden="true">→</i></button><button onClick={() => onOpenPlatform("app")}>App Guidelines <i aria-hidden="true">→</i></button></div></div>
-      <div className="home-hero-visual"><img src="design-system-ai-hero.png" alt={language === "en" ? "AI-connected automotive design system across vehicle, HMI, mobile, and design components" : "由 AI 连接汽车、车机、手机与设计组件的设计规范体系"} /></div>
+      <div className="home-hero-copy"><h1>Design System</h1><span>{language === "en" ? "Pursue the best design experience through clear, shared, and actionable guidance." : "以清晰、统一且可执行的设计指导，持续追求最佳的设计体验。"}</span><div className="home-hero-actions"><button onClick={() => onOpenPlatform("hmi")}>HMI Guidelines <i aria-hidden="true">→</i></button><button onClick={() => onOpenPlatform("web")}>Web Guidelines <i aria-hidden="true">→</i></button><button onClick={() => onOpenPlatform("app")}>App Guidelines <i aria-hidden="true">→</i></button><button onClick={() => onOpenFeature("sound", null)}>Sound Library <i aria-hidden="true">→</i></button></div></div>
+      <div className="home-hero-visual"><img src="/design-system-ai-hero.png" alt={language === "en" ? "AI-connected automotive design system across vehicle, HMI, mobile, and design components" : "由 AI 连接汽车、车机、手机与设计组件的设计规范体系"} /></div>
     </section>
     <section className="home-platform-section" aria-labelledby="home-platform-title"><div className="home-section-heading"><div><p>DESIGN FOR EVERY SURFACE</p><h2 id="home-platform-title">Design Guidelines</h2></div><span>{language === "en" ? "Shared principles and brand foundations, with the right expression for every context." : "共享原则与品牌基础，并为不同场景保留恰当的表达方式。"}</span></div>
-      <div className="home-card-grid">{cards.map((card) => <button className="home-platform-card home-guideline-card" key={card.key} onClick={() => onOpenPlatform(card.key as "hmi" | "web" | "app")}><div className={`home-card-art ${card.key}-art`}>{card.key === "hmi" ? <><div className="home-hmi-screen"><span /><span /><i /><b /></div><div className="home-hmi-line" /></> : card.key === "app" ? <><div className="home-app-phone"><span /><i /><b /><em /></div><div className="home-app-ring" /></> : <div className="home-web-window"><div /><span /><span /><i /><b /></div>}</div><div className="home-card-copy"><p>{card.kicker}</p><h3>{card.title}</h3><span>{card[language]}</span><span className="home-card-link">{language === "en" ? `Explore ${card.shortTitle}` : `探索 ${card.shortTitle}`} <i aria-hidden="true">→</i></span></div></button>)}</div>
+      <div className="home-card-grid">{cards.map((card) => <button className="home-platform-card home-guideline-card" key={card.key} onClick={() => onOpenPlatform(card.key as "hmi" | "web" | "app")}><div className={`home-card-art ${card.key}-art`}>{card.key === "hmi" ? <><div className="home-hmi-screen"><span /><span /><i /><b /></div><div className="home-hmi-line" /></> : card.key === "app" ? <><div className="home-app-phone"><span /><i /><b /><em /></div><div className="home-app-ring" /></> : <div className="home-web-window"><div /><span /><span /><i /><b /></div>}</div><div className="home-card-copy"><h3>{card.title}</h3><span>{card[language]}</span><span className="home-card-link">{language === "en" ? `Explore ${card.shortTitle}` : `探索 ${card.shortTitle}`} <i aria-hidden="true">→</i></span></div></button>)}</div>
     </section>
-    {(["explore", "ai"] as FeaturePageId[]).map((pageId) => { const page = featurePages[pageId]; return <section className="home-platform-section home-feature-section" key={pageId}><div className="home-section-heading"><div><p>{page.eyebrow}</p><h2>{page.title[language]}</h2></div><span>{page.description[language]}</span></div><div className="home-card-grid">{page.modules.map((module) => <button className="home-platform-card home-linked-card" key={module.id} onClick={() => onOpenFeature(pageId, module.id)}><div className={`home-card-art feature-art-${module.art}`}><i /><i /><i /><b /></div><div className="home-card-copy"><h3>{module.title[language]}</h3><span>{module.description[language]}</span><span className="home-card-link">{language === "en" ? "Open module" : "查看模块"} →</span></div></button>)}</div></section>; })}
+    {(["sound", "ai", "explore"] as FeaturePageId[]).map((pageId) => { const page = featurePages[pageId]; return <section className="home-platform-section home-feature-section" key={pageId}><div className="home-section-heading"><div><p>{page.eyebrow}</p><h2>{page.title[language]}</h2></div><span>{page.description[language]}</span></div><div className="home-card-grid">{page.modules.map((module) => <button className="home-platform-card home-linked-card" key={module.id} onClick={() => onOpenFeature(pageId, module.id)}><div className={`home-card-art feature-art-${module.art}`}><i /><i /><i /><b /></div><div className="home-card-copy"><h3>{module.title[language]}</h3><span>{module.description[language]}</span><span className="home-card-link">{language === "en" ? "Open module" : "查看模块"} →</span></div></button>)}</div></section>; })}
     <SiteFooter language={language} onBackToTop={() => document.querySelector<HTMLElement>(".home-page")?.scrollTo({ top: 0, behavior: "smooth" })} />
   </main>;
 }
 
-type FeaturePageId = "explore" | "ai";
+type FeaturePageId = "sound" | "explore" | "ai";
 type FeatureModule = { id: string; title: LocalizedText; description: LocalizedText; art: string };
+const independentModuleNotice = t(
+  "该部分属于独立模块，具体结构和内容待补充，当前网站中的所有信息内容都是示意，没有任何参考意义。",
+  "This is an independent module whose structure and content are still to be completed. All information currently shown on this website is illustrative only and should not be used as a reference.",
+);
 const featurePages: Record<FeaturePageId, { eyebrow: string; title: LocalizedText; description: LocalizedText; modules: FeatureModule[] }> = {
+  sound: { eyebrow: "SONIC EXPERIENCE", title: t("Sound Library", "Sound Library"), description: t("汇集声音设计规范、界面反馈音与品牌声音资产，为 HMI、App 和 Web 建立一致且可识别的听觉体验。", "Guidelines, interface cues, and brand audio assets for a consistent and recognizable sonic experience across HMI, App, and Web."), modules: [
+    { id: "sound-guidelines", title: t("声音设计指南（待定）", "Sound Design Guidelines (TBD)"), description: t("定义声音的体验角色、使用原则、层级关系与多模态协同方式。", "Define the roles, principles, hierarchy, and multimodal coordination of sound."), art: "workflow" },
+    { id: "brand-sounds", title: t("品牌声音库（待定）", "Brand Sound Library (TBD)"), description: t("沉淀启动、标志性提示与品牌识别所需的声音资产。", "Signature audio assets for startup moments, branded cues, and sonic identity."), art: "knowledge" },
+    { id: "interface-sounds", title: t("界面声音库（待定）", "Interface Sound Library (TBD)"), description: t("收录操作反馈、系统状态、任务结果与通知等常用界面声音。", "Reusable audio cues for actions, system states, task results, and notifications."), art: "prompt" },
+  ] },
   explore: { eyebrow: "DESIGN EXPLORATION", title: t("探索", "Explore"), description: t("汇集设计分享、前沿探索与实践案例，为团队提供开放的灵感来源，并推动新的设计方向从思考走向验证。", "A space for design sharing, forward-looking exploration, and practical cases that turns new ideas into validated directions."), modules: [
     { id: "design-sharing", title: t("设计分享", "Design Sharing"), description: t("分享团队经验、设计方法和项目洞察，促进知识在不同产品与专业之间流动。", "Share team experience, methods, and project insights across products and disciplines."), art: "sharing" },
     { id: "concept-exploration", title: t("概念探索", "Concept Exploration"), description: t("围绕未来场景、交互方式与视觉表达开展概念研究和快速验证。", "Research and validate future scenarios, interactions, and visual expressions."), art: "concept" },
     { id: "design-cases", title: t("设计案例", "Design Cases"), description: t("沉淀具有参考价值的实践案例，记录问题、过程、判断与最终结果。", "Document useful cases from the initial problem through decisions and final outcomes."), art: "cases" },
   ] },
-  ai: { eyebrow: "AI FOR DESIGN", title: t("AI 专题", "AI for Design"), description: t("系统整理 AI 在设计工作中的使用方法、实践流程与基础知识，帮助团队安全、有效且有判断地使用 AI。", "Methods, workflows, and knowledge for using AI in design safely, effectively, and with sound judgment."), modules: [
+  ai: { eyebrow: "AI FOR DESIGN", title: t("AI Design", "AI Design"), description: t("系统整理 AI 在设计工作中的使用方法、实践流程与基础知识，帮助团队安全、有效且有判断地使用 AI。", "Methods, workflows, and knowledge for using AI in design safely, effectively, and with sound judgment."), modules: [
     { id: "ai-workflow", title: t("AI 设计工作流", "AI Design Workflow"), description: t("将 AI 应用于研究、构思、原型、内容生成和设计评审等关键环节。", "Apply AI across research, ideation, prototyping, content creation, and design review."), art: "workflow" },
     { id: "prompt-methods", title: t("提示词方法", "Prompt Methods"), description: t("建立清晰、可复用的提示词结构，并通过上下文和约束提高输出质量。", "Build reusable prompt structures and improve results through context and constraints."), art: "prompt" },
     { id: "ai-knowledge", title: t("AI 知识库", "AI Knowledge Base"), description: t("理解模型能力、局限、版权、隐私与质量评估等设计实践所需知识。", "Understand model capabilities, limits, copyright, privacy, and quality evaluation."), art: "knowledge" },
@@ -428,7 +600,7 @@ function FeaturePage({ pageId, moduleId, language, onOpenModule }: { pageId: Fea
   const page = featurePages[pageId];
   const active = page.modules.find((module) => module.id === moduleId);
   if (active) return <main className="feature-page"><section className="feature-detail"><p>{page.eyebrow}</p><h1>{active.title[language]}</h1><span>{active.description[language]}</span><div className={`feature-detail-art feature-art-${active.art}`}><i /><i /><i /><b /></div><section><h2>{language === "en" ? "About this module" : "模块说明"}</h2><p>{language === "en" ? "This module is ready for detailed methods, examples, tools, and related resources to be added as the topic develops." : "该模块用于持续补充详细方法、案例、工具与相关资源，并可随专题内容逐步扩展。"}</p></section></section><SiteFooter language={language} onBackToTop={() => document.querySelector<HTMLElement>(".feature-page")?.scrollTo({ top: 0, behavior: "smooth" })} /></main>;
-  return <main className="feature-page"><section className="feature-hero"><p>{page.eyebrow}</p><h1>{page.title[language]}</h1><span>{page.description[language]}</span></section><section className="feature-grid">{page.modules.map((module) => <button className="feature-card" key={module.id} onClick={() => onOpenModule(module.id)}><div className={`feature-card-art feature-art-${module.art}`}><i /><i /><i /><b /></div><div className="feature-card-copy"><h2>{module.title[language]}</h2><p>{module.description[language]}</p><span>{language === "en" ? "Open module" : "查看模块"} →</span></div></button>)}</section><SiteFooter language={language} onBackToTop={() => document.querySelector<HTMLElement>(".feature-page")?.scrollTo({ top: 0, behavior: "smooth" })} /></main>;
+  return <main className="feature-page"><section className="feature-hero"><p>{page.eyebrow}</p><h1>{page.title[language]}</h1><span>{page.description[language]}</span></section>{pageId === "sound" && <section className="independent-module-notice"><strong>{language === "en" ? "Notice" : "说明"}</strong><p>{independentModuleNotice[language]}</p></section>}<section className="feature-grid">{page.modules.map((module) => <button className="feature-card" key={module.id} onClick={() => onOpenModule(module.id)}><div className={`feature-card-art feature-art-${module.art}`}><i /><i /><i /><b /></div><div className="feature-card-copy"><h2>{module.title[language]}</h2><p>{module.description[language]}</p><span>{language === "en" ? "Open module" : "查看模块"} →</span></div></button>)}</section><SiteFooter language={language} onBackToTop={() => document.querySelector<HTMLElement>(".feature-page")?.scrollTo({ top: 0, behavior: "smooth" })} /></main>;
 }
 
 const resourceGroups = [
@@ -458,6 +630,11 @@ function ResourcesPage({ language }: { language: Language }) {
 }
 
 const websiteUpdates = [
+  { date: "2026.09.09", title: t("HMI 框架层级重组", "HMI Framework Reorganization"), description: t("将 3D 体系移入设计语言，重组人机交互基础、系统核心框架与语音体系，新增第三方应用框架，并将设计模式同步为 4.1–4.27。", "Moved the 3D system into Design Language, reorganized interaction foundations, the core system framework, and voice system, added the third-party app framework, and synchronized design patterns as 4.1–4.27.") },
+  { date: "2026.09.08", title: t("HMI 设计模式框架更新", "HMI Design Pattern Framework Update"), description: t("同步 HMI 人机交互关系与系统组成结构，新增多屏联动、充电、第三空间和辅助驾驶等章节，并将设计模式重排为 4.1–4.28。", "Updated HMI interaction relationships and system composition, added multi-screen, charging, third-space, and assisted-driving chapters, and reordered design patterns as 4.1–4.28.") },
+  { date: "2026.09.04", title: t("多场景人机交互目录", "Multi-scenario Interaction Chapter"), description: t("在 HMI 人机交互基础下新增多场景人机交互，并将多用户交互顺延为 4.1.1.3。", "Added Multi-scenario Interaction under HMI Interaction Foundations and moved Multi-user Interaction to 4.1.1.3.") },
+  { date: "2026.09.04", title: t("HMI 专属框架与人机区域", "HMI Framework and Human-machine Zones"), description: t("同步 HMI 专属框架的 4.1–4.25 设计模式目录，并发布人机区域章节及两张关系示意图。", "Synchronized the HMI-specific 4.1–4.25 design-pattern hierarchy and published the Chinese human-machine zones chapter with two diagrams.") },
+  { date: "2026.09.03", title: t("HMI 框架与章节内容同步", "HMI Framework and Content Sync"), description: t("同步 HMI 系统层级及设计模式顺序，更新手势和 TUI 定义，并同步设计 DNA、手势、语音和 TUI 章节正文。", "Updated the HMI system hierarchy and pattern order, revised gesture and TUI definitions, and synchronized the Chinese DNA, gesture, voice, and TUI chapters.") },
   { date: "2026.08.26", title: t("产品规范与资源架构更新", "Product Guidelines and Resources"), description: t("新增 HMI、Web、App 独立规范入口，重构 HMI 章节层级，并将设计资源独立为网站一级模块。", "Added separate HMI, Web, and App guidelines, refined the HMI hierarchy, and promoted resources to a top-level module.") },
   { date: "2026.08.08", title: t("主页与专题模块", "Homepage and Topic Modules"), description: t("新增独立主页、探索、AI 专题及统一卡片式内容入口。", "Added the standalone homepage, Explore, AI Topics, and unified card-based entry points.") },
   { date: "2026.08.07", title: t("章节内容同步", "Content Synchronization"), description: t("同步 overview、设计原则和 HMI 设计原则等章节细节内容。", "Synchronized detailed content for overview and HMI design principles.") },
@@ -481,31 +658,39 @@ function PlatformGuidelinesPage({ platform, language }: { platform: "Web" | "App
   ];
   const pages = useMemo(() => {
     const result: Record<string, ModulePage> = {};
-    result[`${prefix}-overview`] = { eyebrow: `${platform.toUpperCase()} GUIDELINES`, title: `${platform} Guidelines`, accent: "#168fe5", lead: `面向 ${platform} 产品的设计规划与规范，用于建立一致、易用且具有品牌识别度的产品体验。`, items: structure.map(([id, title, body], index) => item(String(index + 2), title, body)), noteTitle: "规范规划", note: "各章节将随平台设计工作持续补充。" };
+    result[`${prefix}-explanation`] = { eyebrow: `${platform.toUpperCase()} GUIDELINES`, title: "说明", accent: "#d97706", lead: independentModuleNotice.zh, items: [], noteTitle: "模块状态", note: independentModuleNotice.zh };
+    result[`${prefix}-overview`] = { eyebrow: `${platform.toUpperCase()} GUIDELINES`, title: `${platform} Guidelines`, accent: "#168fe5", lead: `面向 ${platform} 产品的设计规划与规范，用于建立一致、易用且具有品牌识别度的产品体验。`, items: structure.map(([id, title, body], index) => item(String(index + 3), title, body)), noteTitle: "规范规划", note: "各章节将随平台设计工作持续补充。" };
     structure.forEach(([id, title, body], index) => { result[`${prefix}-${id}`] = { eyebrow: `${platform.toUpperCase()} GUIDELINES`, title, accent: ["#18a66a", "#695cff", "#00a0a8", "#ff7849"][index], lead: body, items: [item("FOUNDATION", "基础定义", `明确 ${title} 的范围、目标和平台约束。`), item("GUIDANCE", "设计指导", `沉淀 ${platform} 场景下可执行的设计方法和判断标准。`), item("EXAMPLES", "案例与资源", "通过案例、模板和资源帮助团队理解并落地规范。")], noteTitle: "建设状态", note: "本章节已建立基础结构，可持续补充正式规范内容。" }; });
     return result;
   }, [platform, prefix]);
-  const nav = useMemo<NavNode[]>(() => [{ id: `${prefix}-overview`, label: "1. overview", body: pages[`${prefix}-overview`].lead, accent: "#168fe5" }, ...structure.map(([id, title, body], index) => ({ id: `${prefix}-${id}`, label: `${index + 2}. ${title}`, body, accent: pages[`${prefix}-${id}`].accent }))], [pages, prefix]);
-  const [active, setActive] = useState(`${prefix}-overview`);
+  const nav = useMemo<NavNode[]>(() => [{ id: `${prefix}-explanation`, label: "1. 说明", body: independentModuleNotice.zh, accent: "#d97706" }, { id: `${prefix}-overview`, label: "2. overview", body: pages[`${prefix}-overview`].lead, accent: "#168fe5" }, ...structure.map(([id, title, body], index) => ({ id: `${prefix}-${id}`, label: `${index + 3}. ${title}`, body, accent: pages[`${prefix}-${id}`].accent }))], [pages, prefix]);
+  const [active, setActive] = useState(`${prefix}-explanation`);
   const [query, setQuery] = useState("");
   const [expanded, setExpanded] = useState<Set<ModuleId>>(() => new Set());
+  const [menuOpen, setMenuOpen] = useState(false);
   const content = useRef<HTMLElement>(null);
   const path = findNodePath(nav, active);
   const matches = nav.filter((node) => localizedNodeLabel(node.label, language).toLowerCase().includes(query.toLowerCase()));
-  const select = (id: string) => { setActive(id); setQuery(""); requestAnimationFrame(() => content.current?.scrollTo({ top: 0, behavior: "smooth" })); };
-  return <><div className="doc-header"><div className="doc-header-inner"><nav className="doc-breadcrumb"><span><button onClick={() => select(`${prefix}-overview`)}>{platform}</button></span>{path.map((node) => <span key={node.id}><i>›</i><button className={node.id === active ? "current" : ""} onClick={() => select(node.id)}>{localizedNodeLabel(node.label, language)}</button></span>)}</nav></div></div><div className="workspace"><aside className="sidebar"><div className="sidebar-inner"><div className="search-wrap"><span className="search-icon" /><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={language === "en" ? "Search all levels" : "筛选全部层级"} />{query && <div className="search-results">{matches.length ? matches.map((node) => <button key={node.id} onClick={() => select(node.id)}><span>{localizedNodeLabel(node.label, language)}</span></button>) : <p>{language === "en" ? "No matching content" : "未找到匹配内容"}</p>}</div>}</div><nav className="sidebar-nav tree-nav">{nav.map((node) => <TreeNavItem key={node.id} node={node} depth={0} activeModule={active} expanded={expanded} language={language} onSelect={select} onToggle={(id) => setExpanded((current) => { const next = new Set(current); if (next.has(id)) next.delete(id); else next.add(id); return next; })} />)}</nav><div className="sidebar-foot"><span>{platform} Guidelines</span><strong className="sync-status">{language === "en" ? "In progress" : "建设中"}</strong></div></div></aside><main className="content" ref={content}><div key={`${active}-${language}`} className="module-view"><DetailModule page={pages[active]} language={language} isTopLevel={path.length === 1} onSelect={select} /></div><SiteFooter language={language} onBackToTop={() => content.current?.scrollTo({ top: 0, behavior: "smooth" })} /></main></div></>;
+  const select = (id: string) => { setActive(id); setQuery(""); setMenuOpen(false); requestAnimationFrame(() => content.current?.scrollTo({ top: 0, behavior: "smooth" })); };
+  return <>
+    <div className="doc-header"><div className="doc-header-inner"><button className="mobile-directory-toggle" type="button" aria-label={language === "en" ? "Open directory" : "打开目录"} aria-expanded={menuOpen} onClick={() => setMenuOpen((value) => !value)}><i aria-hidden="true"><span /><span /><span /></i></button><nav className="doc-breadcrumb"><span><button onClick={() => select(`${prefix}-explanation`)}>{platform}</button></span>{path.map((node) => <span key={node.id}><i>›</i><button className={node.id === active ? "current" : ""} onClick={() => select(node.id)}>{localizedNodeLabel(node.label, language)}</button></span>)}</nav></div></div>
+    <div className="workspace"><aside className={`sidebar ${menuOpen ? "open" : ""}`}><div className="sidebar-inner"><div className="search-wrap"><span className="search-icon" /><input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={language === "en" ? "Search all levels" : "筛选全部层级"} />{query && <div className="search-results">{matches.length ? matches.map((node) => <button key={node.id} onClick={() => select(node.id)}><span>{localizedNodeLabel(node.label, language)}</span></button>) : <p>{language === "en" ? "No matching content" : "未找到匹配内容"}</p>}</div>}</div><nav className="sidebar-nav tree-nav">{nav.map((node) => <TreeNavItem key={node.id} node={node} depth={0} activeModule={active} expanded={expanded} language={language} onSelect={select} onToggle={(id) => setExpanded((current) => { const next = new Set(current); if (next.has(id)) next.delete(id); else next.add(id); return next; })} />)}</nav></div></aside>{menuOpen && <button className="sidebar-scrim" aria-label={language === "en" ? "Close directory" : "关闭目录"} onClick={() => setMenuOpen(false)} />}<main className="content" ref={content}><div key={`${active}-${language}`} className="module-view"><DetailModule page={pages[active]} language={language} isTopLevel={path.length === 1} onSelect={select} /></div><SiteFooter language={language} onBackToTop={() => content.current?.scrollTo({ top: 0, behavior: "smooth" })} /></main></div>
+  </>;
 }
 
 export function DesignSystemPage() {
   const [sitePage, setSitePage] = useState<"home" | "hmi" | "web" | "app" | "resources" | "updates" | FeaturePageId>("home");
   const [featureModule, setFeatureModule] = useState<string | null>(null);
-  const [activeModule, setActiveModule] = useState<ModuleId>("overview");
+  const [activeModule, setActiveModule] = useState<ModuleId>("explanation");
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [language, setLanguage] = useState<Language>("en");
+  const [language, setLanguage] = useState<Language>("zh");
   const [languageOpen, setLanguageOpen] = useState(false);
   const [expanded, setExpanded] = useState<Set<ModuleId>>(() => new Set(expandableIds));
+  useEffect(() => {
+    document.documentElement.dataset.language = language;
+  }, [language]);
   const contentRef = useRef<HTMLElement>(null);
   const matches = useMemo(() => { const keyword = query.trim().toLowerCase(); if (!keyword) return []; return allNavItems.filter((entry) => `${entry.label} ${localizedNodeLabel(entry.label, language)} ${modulePages[entry.id].title} ${modulePages[entry.id].eyebrow}`.toLowerCase().includes(keyword)).slice(0, 9); }, [query, language]);
   const selectModule = (id: ModuleId) => {
@@ -519,7 +704,7 @@ export function DesignSystemPage() {
       document.querySelector<HTMLElement>(`[data-nav-id="${id}"]`)?.scrollIntoView({ block: "nearest", behavior: "smooth" });
     }));
   };
-  const openGuidelines = (id: ModuleId = "overview") => {
+  const openGuidelines = (id: ModuleId = "explanation") => {
     setSitePage("hmi");
     selectModule(id);
   };
@@ -529,10 +714,10 @@ export function DesignSystemPage() {
   const activeRootId = activePath[0]?.id;
 
   return <div className="site-shell">
-    <header className="global-header"><div className="global-header-inner"><button className="menu-toggle" aria-expanded={mobileNavOpen} aria-label={language === "en" ? "Toggle navigation" : "切换导航"} onClick={() => setMobileNavOpen((value) => !value)}><span /><span /><span /></button><button className="brand brand-button" onClick={() => setSitePage("home")} aria-label="Design System"><BrandGlyph /><span>Design System</span></button><nav className="global-nav" aria-label={language === "en" ? "Global navigation" : "全局导航"}><button className={sitePage === "home" ? "active" : ""} onClick={() => setSitePage("home")}>{language === "en" ? "Home" : "主页"}</button><button className={sitePage === "hmi" ? "active" : ""} onClick={() => openGuidelines("overview")}>HMI</button><button className={sitePage === "web" ? "active" : ""} onClick={() => setSitePage("web")}>Web</button><button className={sitePage === "app" ? "active" : ""} onClick={() => setSitePage("app")}>App</button><button className={sitePage === "explore" ? "active" : ""} onClick={() => openFeaturePage("explore")}>{language === "en" ? "Explore" : "探索"}</button><button className={sitePage === "ai" ? "active" : ""} onClick={() => openFeaturePage("ai")}>{language === "en" ? "AI Topics" : "AI 专题"}</button><button className={sitePage === "resources" ? "active" : ""} onClick={() => setSitePage("resources")}>{language === "en" ? "Resources" : "设计资源"}</button><button className={sitePage === "updates" ? "active" : ""} onClick={() => setSitePage("updates")}>{language === "en" ? "Updates" : "更新"}</button></nav><div className="header-actions"><button className="header-icon search-shortcut" aria-label={language === "en" ? "Open search" : "打开搜索"} onClick={() => { setSitePage("hmi"); requestAnimationFrame(() => document.getElementById("site-search")?.focus()); }} /><div className="language-switcher"><button className="language-trigger" aria-haspopup="menu" aria-expanded={languageOpen} onClick={() => setLanguageOpen((value) => !value)}>{language === "zh" ? "中文" : "English"}<span aria-hidden="true">⌄</span></button>{languageOpen && <div className="language-menu" role="menu"><button className={language === "zh" ? "selected" : ""} role="menuitem" onClick={() => { setLanguage("zh"); setLanguageOpen(false); }}>中文</button><button className={language === "en" ? "selected" : ""} role="menuitem" onClick={() => { setLanguage("en"); setLanguageOpen(false); }}>English</button></div>}</div></div></div></header>
-    {mobileNavOpen && <nav className="mobile-global-nav" aria-label={language === "en" ? "Mobile navigation" : "移动端导航"}><button onClick={() => { setSitePage("home"); setMobileNavOpen(false); }}>{language === "en" ? "Home" : "主页"}</button><button onClick={() => { openGuidelines("overview"); setMobileNavOpen(false); }}>HMI</button><button onClick={() => { setSitePage("web"); setMobileNavOpen(false); }}>Web</button><button onClick={() => { setSitePage("app"); setMobileNavOpen(false); }}>App</button><button onClick={() => { openFeaturePage("explore"); setMobileNavOpen(false); }}>{language === "en" ? "Explore" : "探索"}</button><button onClick={() => { openFeaturePage("ai"); setMobileNavOpen(false); }}>{language === "en" ? "AI Topics" : "AI 专题"}</button><button onClick={() => { setSitePage("resources"); setMobileNavOpen(false); }}>{language === "en" ? "Resources" : "设计资源"}</button><button onClick={() => { setSitePage("updates"); setMobileNavOpen(false); }}>{language === "en" ? "Updates" : "更新"}</button>{sitePage === "hmi" && <button className="mobile-directory-link" onClick={() => { setMenuOpen(true); setMobileNavOpen(false); }}>{language === "en" ? "Open HMI directory" : "打开 HMI 章节目录"}</button>}</nav>}
-    {sitePage === "home" ? <HomePage language={language} onOpenPlatform={(platform) => platform === "hmi" ? openGuidelines("overview") : setSitePage(platform)} onOpenFeature={(page, module) => { setFeatureModule(module); setSitePage(page); }} /> : sitePage === "explore" || sitePage === "ai" ? <FeaturePage pageId={sitePage} moduleId={featureModule} language={language} onOpenModule={setFeatureModule} /> : sitePage === "resources" ? <ResourcesPage language={language} /> : sitePage === "updates" ? <UpdatesPage language={language} /> : sitePage === "web" || sitePage === "app" ? <PlatformGuidelinesPage key={sitePage} platform={sitePage === "web" ? "Web" : "App"} language={language} /> : <>
-    <div className="doc-header"><div className="doc-header-inner"><nav className="doc-breadcrumb" aria-label={language === "en" ? "Current section path" : "当前章节路径"}><span><button onClick={() => openGuidelines("overview")}>HMI</button></span>{activePath.map((node) => <span key={node.id}><i aria-hidden="true">›</i><button className={node.id === activeModule ? "current" : ""} onClick={() => selectModule(node.id)}>{localizedNodeLabel(node.label, language)}</button></span>)}</nav></div></div>
+    <header className="global-header"><div className="global-header-inner"><button className="menu-toggle" aria-expanded={mobileNavOpen} aria-label={language === "en" ? "Toggle navigation" : "切换导航"} onClick={() => setMobileNavOpen((value) => !value)}><span /><span /><span /></button><button className="brand brand-button" onClick={() => setSitePage("home")} aria-label="Design System"><BrandGlyph /><span>Design System</span></button><nav className="global-nav" aria-label={language === "en" ? "Global navigation" : "全局导航"}><button className={sitePage === "home" ? "active" : ""} onClick={() => setSitePage("home")}>Home</button><button className={sitePage === "hmi" ? "active" : ""} onClick={() => openGuidelines("explanation")}>HMI</button><button className={sitePage === "web" ? "active" : ""} onClick={() => setSitePage("web")}>Web</button><button className={sitePage === "app" ? "active" : ""} onClick={() => setSitePage("app")}>App</button><button className={sitePage === "sound" ? "active" : ""} onClick={() => openFeaturePage("sound")}>Sound Library</button><button className={sitePage === "ai" ? "active" : ""} onClick={() => openFeaturePage("ai")}>AI Design</button><button className={sitePage === "explore" ? "active" : ""} onClick={() => openFeaturePage("explore")}>Explore</button><button className={sitePage === "resources" ? "active" : ""} onClick={() => setSitePage("resources")}>Resources</button><button className={sitePage === "updates" ? "active" : ""} onClick={() => setSitePage("updates")}>Updates</button></nav><div className="header-actions"><button className="header-icon search-shortcut" aria-label={language === "en" ? "Open search" : "打开搜索"} onClick={() => { setSitePage("hmi"); requestAnimationFrame(() => document.getElementById("site-search")?.focus()); }} /><div className="language-switcher"><button className="language-trigger" aria-haspopup="menu" aria-expanded={languageOpen} onClick={() => setLanguageOpen((value) => !value)}>{language === "zh" ? "中文" : "English"}<span aria-hidden="true">⌄</span></button>{languageOpen && <div className="language-menu" role="menu"><button className={language === "zh" ? "selected" : ""} role="menuitem" onClick={() => { setLanguage("zh"); setLanguageOpen(false); }}>中文</button><button className={language === "en" ? "selected" : ""} role="menuitem" onClick={() => { setLanguage("en"); setLanguageOpen(false); }}>English</button></div>}</div></div></div></header>
+    {mobileNavOpen && <nav className="mobile-global-nav" aria-label={language === "en" ? "Mobile navigation" : "移动端导航"}><button onClick={() => { setSitePage("home"); setMobileNavOpen(false); }}>Home</button><button onClick={() => { openGuidelines("explanation"); setMobileNavOpen(false); }}>HMI</button><button onClick={() => { setSitePage("web"); setMobileNavOpen(false); }}>Web</button><button onClick={() => { setSitePage("app"); setMobileNavOpen(false); }}>App</button><button onClick={() => { openFeaturePage("sound"); setMobileNavOpen(false); }}>Sound Library</button><button onClick={() => { openFeaturePage("ai"); setMobileNavOpen(false); }}>AI Design</button><button onClick={() => { openFeaturePage("explore"); setMobileNavOpen(false); }}>Explore</button><button onClick={() => { setSitePage("resources"); setMobileNavOpen(false); }}>Resources</button><button onClick={() => { setSitePage("updates"); setMobileNavOpen(false); }}>Updates</button>{sitePage === "hmi" && <button className="mobile-directory-link" onClick={() => { setMenuOpen(true); setMobileNavOpen(false); }}>{language === "en" ? "Open HMI directory" : "打开 HMI 章节目录"}</button>}</nav>}
+    {sitePage === "home" ? <HomePage language={language} onOpenPlatform={(platform) => platform === "hmi" ? openGuidelines("explanation") : setSitePage(platform)} onOpenFeature={(page, module) => { setFeatureModule(module); setSitePage(page); }} /> : sitePage === "sound" || sitePage === "explore" || sitePage === "ai" ? <FeaturePage pageId={sitePage} moduleId={featureModule} language={language} onOpenModule={setFeatureModule} /> : sitePage === "resources" ? <ResourcesPage language={language} /> : sitePage === "updates" ? <UpdatesPage language={language} /> : sitePage === "web" || sitePage === "app" ? <PlatformGuidelinesPage key={sitePage} platform={sitePage === "web" ? "Web" : "App"} language={language} /> : <>
+    <div className="doc-header"><div className="doc-header-inner"><button className="mobile-directory-toggle" type="button" aria-label={language === "en" ? "Open directory" : "打开目录"} aria-expanded={menuOpen} onClick={() => setMenuOpen((value) => !value)}><i aria-hidden="true"><span /><span /><span /></i></button><nav className="doc-breadcrumb" aria-label={language === "en" ? "Current section path" : "当前章节路径"}><span><button onClick={() => openGuidelines("explanation")}>HMI</button></span>{activePath.map((node) => <span key={node.id}><i aria-hidden="true">›</i><button className={node.id === activeModule ? "current" : ""} onClick={() => selectModule(node.id)}>{localizedNodeLabel(node.label, language)}</button></span>)}</nav></div></div>
     <div className="workspace"><aside className={`sidebar ${menuOpen ? "open" : ""}`}><div className="sidebar-inner"><div className="search-wrap"><span className="search-icon" aria-hidden="true" /><input id="site-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={language === "en" ? "Search all levels" : "筛选全部层级"} aria-label={language === "en" ? "Search framework" : "筛选全部框架层级"} autoComplete="off" />{query && <div className="search-results" role="listbox">{matches.length ? matches.map((entry) => <button key={entry.id} onClick={() => selectModule(entry.id)}><span>{localizedNodeLabel(entry.label, language)}</span><small>{cleanKicker(modulePages[entry.id].eyebrow)}</small></button>) : <p>{language === "en" ? "No matching content" : "未找到匹配内容"}</p>}</div>}</div><nav className="sidebar-nav tree-nav" aria-label={language === "en" ? "Framework hierarchy" : "完整框架目录"}>{navigation.map((node) => <TreeNavItem key={node.id} node={node} depth={0} activeModule={activeModule} expanded={expanded} language={language} onSelect={selectModule} onToggle={toggleNode} />)}</nav><div className="sidebar-foot"><span>{language === "en" ? "Website status" : "网站同步状态"}</span><strong className="sync-status">{language === "en" ? "Updated" : "已更新"}</strong></div></div></aside>
       {menuOpen && <button className="sidebar-scrim" aria-label="关闭目录" onClick={() => setMenuOpen(false)} />}
       <main className="content" ref={contentRef} tabIndex={-1} aria-live="polite"><div key={`${activeModule}-${language}`} className="module-view"><DetailModule page={modulePages[activeModule]} language={language} isTopLevel={activePath.length === 1} onSelect={selectModule} /></div><SiteFooter language={language} onBackToTop={() => contentRef.current?.scrollTo({ top: 0, behavior: "smooth" })} /></main>
